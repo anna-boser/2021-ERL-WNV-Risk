@@ -7,10 +7,10 @@ It is organized as a R project in two parts: LST to air temperature modeling **t
 
 **temperature_modeling** has data from several sources in the **raw_data** folder that lives in the **data** folder:
 - CIMIS
-  - latlons.csv
+  - LatLon.csv
   - all
 - ECOSTRESS
-  - all_ims: all ecostress lst images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **latlons.csv** file
+  - all_ims: all ecostress lst images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **LatLon.csv** file
   - filtered: remove any points that are not the highest quality using **QC_ECOSTRESS.R**
 - Landsat 8
   - all_ims: all landsat 8 images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **latlons.csv** file

@@ -1,0 +1,88 @@
+---
+title: "Temperature Modeling Restults and Plots"
+author: "Anna Boser"
+date: "1/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+
+```{r getdata, echo=FALSE}
+#first read in the dataset
+Comp_temp <- readRDS(here::here("temperature_modeling", 
+                              "data", 
+                              "processed_data", 
+                              "merged_df.RData"))
+```
+
+
+### Figure 3: LST vs. Air temp scatterplot
+```{r lst_scatter, echo=FALSE, warning=FALSE}
+ggplot(Comp_temp, aes(x = ECOSTRESS, y =Air_Temp)) + 
+  geom_point(aes(alpha = .2)) +
+  stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, aes(color = "Cubic polynomial"), show.legend = TRUE) + 
+  stat_function(fun = function(x){x}, aes(color = "One to one"), show.legend = TRUE) + 
+  labs(title = "Land surface temperature vs. air temperature in the San Joaquin Valley", 
+       subtitle = "June - September, 2018 - 2020", 
+       caption = "Air temperature values from CIMIS weather stations.
+       Land surface temperature from ECOSTRESS") + 
+  ylab("Air Temperature (C)") + 
+  xlab("Land Surface Temperature (C)") + 
+  ylim(min = 5, max = 45) + 
+  xlim(min = 5, max = 60) + 
+  guides(alpha = FALSE) +
+  theme(legend.title = element_blank())
+```
+###Figure 4: breakdown vs vegetation
+```{r vegetation, warning = FALSE, echo = FALSE}
+ggplot(Comp_temp, aes(x =  ECOSTRESS, y =Air_Temp)) + 
+  geom_point(aes(color = V, alpha = .2)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  stat_function(fun = function(x){x}, show.legend = TRUE) + 
+  labs(title = "Land surface temperature vs. air temperature by vegetation fraction", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley", 
+       caption = "Air temperature values from CIMIS weather stations.
+       Land surface temperature from ECOSTRESS") + 
+  ylab("Air Temperature (C)") + 
+  xlab("Land Surface Temperature (C)") + 
+  ylim(min = 0, max = 45) + 
+  xlim(min = 0, max = 60) + 
+  scale_colour_gradient2(low = "blue", high = "red") + 
+  labs(color = "Vegetation fraction") + 
+  guides(alpha = FALSE) +
+  theme_dark()
+```
+
+###Table 1: statistical significance and R2 of various models
+```{r statsig_tbl, warning=FALSE, echo=FALSE}
+
+```
+
+
+###Figure 5: Corrected relationship w/ 1:1 scatter
+```{r 1to1_scatter, warning = FALSE, echo = FALSE}
+#chosen model
+final <- lm(Air_Temp ~ V + dayness*ECOSTRESS, 
+            data = Comp_temp)
+#fit values
+Comp_temp$air_temp_modeled <- final$fitted.values
+
+ggplot(Comp_temp, aes(x = Air_Temp, y = air_temp_modeled)) + 
+  geom_point(aes(alpha = .2)) +
+  stat_function(fun = function(x){x}, aes(color = "One to one"), show.legend = TRUE) + 
+  labs(title = "Modeled vs. Observed Air Temperature", 
+       subtitle = "San Joaquin Valley, June - September, 2018 - 2020", 
+       caption = "") + 
+  ylab("Modeled Air Temperature (C)") + 
+  xlab("Observed Air Temperature (C)") + 
+  ylim(c(0, 45)) + 
+  xlim(c(0, 45)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear regression")) +
+  guides(alpha = FALSE) +
+  theme(legend.title = element_blank())
+```
+

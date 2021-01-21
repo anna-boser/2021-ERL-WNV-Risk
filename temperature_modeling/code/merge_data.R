@@ -120,3 +120,10 @@ saveRDS(Comp_temp, here::here("temperature_modeling",
                               "data", 
                               "processed_data", 
                               "merged_df.RData"))
+
+# also as csv to send to Dan
+write.csv(Comp_temp, here::here("temperature_modeling", 
+                              "data", 
+                              "processed_data", 
+                              "merged_df.csv"))
+

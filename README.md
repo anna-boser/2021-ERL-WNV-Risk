@@ -29,7 +29,7 @@ Under **results** an R markdown file and corresponding html file can be found th
   - all_ims: all ECOSTRESS images in the study area Jun-Sept 2018-2020
   - filtered_ims: Renamed images with high QC and no cloud cover (see **filter_LST.R**)
   - chosen_four: four images of the same year at night, dawn, midday, and dusk (how do you choose these?)
-- LSF (?) Landsat images for four chosen ECOSTRESS images
+- HLS Landsat images for four chosen ECOSTRESS images
   - all_ims
   - chosen_four
 - Kern_ag_layer

@@ -28,13 +28,13 @@ Under **results** an R markdown file and corresponding html file can be found th
 - ECOSTRESS: 
   - all_ims: all ECOSTRESS images in the study area Jun-Sept 2018-2020
   - filtered_ims: Renamed images with high QC and no cloud cover (see **filter_LST.R**)
-  - chosen_four: four images of the same year at night, dawn, midday, and dusk (how do you choose these?)
+  - chosen_four: four representative images of the same year at night, dawn, midday, and dusk 
 - HLS Landsat images for four chosen ECOSTRESS images
   - all_ims
   - chosen_four
 - Kern_ag_layer
   - original
-  - binned into different categories of interest
+  - binned_cropped: binned into different categories of interest and cropped to study area using **kern_bin.R**
 - Urban layer?? maybe needed. 
 
 In the **processed_data** folder you can find the following: 

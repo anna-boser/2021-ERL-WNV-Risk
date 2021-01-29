@@ -12,7 +12,21 @@ library(ggplot2)
 
 
 ```{r getdata, echo=FALSE}
+T = c(seq(0,100,by=0.1))
 
+tx_tars = - (2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
+bx_tars = (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+
+
+plot(0,col="white",xlim=c(0,55),ylim=c(0,50),
+     xlab="Temperature (C)", ylab = "")
+points(T,tx_tars,pch=16,col="blue")
+points(T,bx_tars*100,pch=16,col="red")
+lines(T,bx_tars*100,pch=16,col="red")
+legend(25, 45, legend=c("WNV transmission probability", "Biting rate x 100"),
+       col=c("blue", "red"), lty = 1)
+title("Culex tarsalis biting and West Nile Virus (WNV) transmission probability 
+      as a function of temperature")
 ```
 
 ### Figure 2 - Mordecai equation plot

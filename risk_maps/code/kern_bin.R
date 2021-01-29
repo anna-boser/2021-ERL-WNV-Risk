@@ -54,10 +54,25 @@ add_cat_col <- function(kerndata){
   return(kerndata)
 }
 
-kern2018 <- add_cat_col(kern2018)
-kern2019 <- add_cat_col(kern2019)
-kern2020 <- add_cat_col(kern2020)
+col_and_save <- function(kerndata, year){
+  kerndata <- add_cat_col(kerndata)
+  dir.create(here::here("risk_maps", 
+                        "data", 
+                        "raw_data", 
+                        "Kern_ag", 
+                        "binned_cropped", 
+                        paste0("kern", year)))
+  st_write(kerndata, here::here("risk_maps", 
+                                "data", 
+                                "raw_data", 
+                                "Kern_ag", 
+                                "binned_cropped", 
+                                paste0("kern", year), 
+                                paste0("kern", year, ".shp")), 
+           layer = paste0("kern", year))
+  
+}
 
-
-
-
+col_and_save(kern2018, 2018)
+col_and_save(kern2019, 2019)
+col_and_save(kern2020, 2020)

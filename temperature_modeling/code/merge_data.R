@@ -127,3 +127,24 @@ write.csv(Comp_temp, here::here("temperature_modeling",
                               "processed_data", 
                               "merged_df.csv"))
 
+# Dan sent me the unmixed vegetation stuff so now I just need to add it to add it
+Comp_temp <- readRDS(here::here("temperature_modeling", 
+                                "data", 
+                                "processed_data", 
+                                "merged_df.RData"))
+Dan_unmix <- read.csv(here::here("temperature_modeling", 
+                        "data", 
+                        "raw_data", 
+                        "Landsat",
+                        "Landsat_unmixed.csv"))
+Comp_temp$V <- Dan_unmix$V2
+
+#remove values less than 0:
+Comp_temp <- filter(Comp_temp, V >= 0)
+  
+# save file
+saveRDS(Comp_temp, here::here("temperature_modeling", 
+                              "data", 
+                              "processed_data", 
+                              "merged_df.RData"))
+  

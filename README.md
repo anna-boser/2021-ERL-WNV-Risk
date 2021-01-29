@@ -7,18 +7,16 @@ It is organized as a R project in two parts: LST to air temperature modeling **t
 
 **temperature_modeling** has data from several sources in the **raw_data** folder that lives in the **data** folder:
 - CIMIS
-  - LatLon.csv
-  - all
+  - LatLon.csv: lats and lons of site locations
+  - all_points: all available data during study period
 - ECOSTRESS
-  - all_ims: all ecostress lst images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **LatLon.csv** file
-  - filtered: remove any points that are not the highest quality using **QC_ECOSTRESS.R**
-- Landsat 8
-  - all_ims: all landsat 8 images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **latlons.csv** file
-  - filtered: remove any points that are not the highest quality using **QC_Landsat.R**
+  - all_points: all ecostress lst images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **LatLon.csv** file
+- Landsat
+  - all_points: all landsat 8 images at the CIMIS locations for Jun-Sept 2018-2020 obtained using AppEARS and CIMIS **LatLon.csv** file
 
 These data are then processed and matched together in the **merge_data.R** file that can be found in the **code** folder to create **merged_df.RData** that can be found in the **processed_data** folder. This dataset is then further modified by creating a "Vegetation" category by performing linear unmixing of the the Landsat 8 reflectances. The final dataset used to generate results is named **modeling_df.Rdata**. 
 
-Under **results** an R markdown file and corresponding html filecan be found that describes the modeling approach and houses the following figures: 
+Under **results** an R markdown file and corresponding html file can be found that describes the modeling approach and houses the following figures: 
 - fig 3 - LST vs air temp scatterplots - raw data 
 - fig 4 - breakdown vs vegetation - [showing no real impact?] 
 - fig 5 - Corrected relationship w/ nice 1:1 scatter
@@ -26,17 +24,17 @@ Under **results** an R markdown file and corresponding html filecan be found tha
 ## Risk Maps
 
 **risk_maps** has the following **raw_data** in its **data** folder: 
-- Study_extent: shapefiles of the study border
+- Study_extent: shapefiles of the study border created using **study_extent.R**
 - ECOSTRESS: 
   - all_ims: all ECOSTRESS images in the study area Jun-Sept 2018-2020
-  - filtered_ims: Images with high QC and no cloud cover (hand picked? or use their QC...?)
-  - chosen_four: four images of the same year at night, dawn, midday, and dusk (how do you choose these?)
-- LSF (?) Landsat images for four chosen ECOSTRESS images
+  - filtered_ims: Renamed images with high QC and no cloud cover (see **filter_LST.R**)
+  - chosen_four: four representative images of the same year at night, dawn, midday, and dusk 
+- HLS Landsat images for four chosen ECOSTRESS images
   - all_ims
   - chosen_four
 - Kern_ag_layer
   - original
-  - binned into different categories of interest
+  - binned_cropped: binned into different categories of interest and cropped to study area using **kern_bin.R**
 - Urban layer?? maybe needed. 
 
 In the **processed_data** folder you can find the following: 

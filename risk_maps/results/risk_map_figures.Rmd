@@ -1,0 +1,41 @@
+---
+title: "Risk Maps"
+author: "Anna Boser"
+date: "1/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+
+```{r getdata, echo=FALSE}
+
+```
+
+### Figure 2 - Mordecai equation plot
+```{r moredecai, echo=FALSE, warning=FALSE}
+
+```
+
+### Figure 6 - Tx wrt time of day (land cover type)
+```{r day_tiime_series, echo=FALSE, warning=FALSE}
+
+```
+
+### Figure 7 - maps for each time of day
+```{r four_maps, echo=FALSE, warning=FALSE}
+
+```
+
+### Figure 8 - statistical illustration showing breakdown by land cover
+
+* Different ag types vs urban
+* Heterogeneity within urban
+* Veg continuous vs risk
+
+```{r lst_scatter, echo=FALSE, warning=FALSE}
+
+```

@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
+library(here)
 ```
 
 
@@ -67,7 +68,7 @@ ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) +
   xlab("Fractional vegetation") + 
   ylim(min = 0, max = 45) + 
   scale_colour_gradient(low = "green3", high = "red") + 
-  labs(color = "Land Surface Temperature") + 
+  labs(color = "Land surface temperature (C)") + 
   # theme_dark() + 
   guides(alpha = FALSE)
 

@@ -35,12 +35,15 @@ Under **results** an R markdown file and corresponding html file can be found th
 - Kern_ag_layer
   - original
   - binned_cropped: binned into different categories of interest and cropped to study area using **kern_bin.R**
-- Urban layer?? maybe needed. 
+- Urban layer
+  - original: the 2016 Statewide Crop Mapping GIS Shapefiles from the California Department of Water Resources (https://data.cnra.ca.gov/dataset/statewide-crop-mapping)
+  - filtered_cropped: urban layer only cropped to the study extent using **urban_filter.R**
 
 In the **processed_data** folder you can find the following: 
-- **land_cover_avgs.RData**: a file with the average risk profiles (tx and bite) over the different land cover types of interest, built in **land_cover_avg.R**. 
-- **all_pixels.RData**: every pixel within one of the four chosen images (labeled) with labels for land cover types and vegetation, built in **all_pixels.R**. 
+- **landcover_avgs.RData**: a file with the average risk profiles (tx and bite) over the different land cover types of interest, built in **landcover_avg.R**. 
+- **all_pixels.RData**: every pixel within an image land cover types and vegetation, built in **all_pixels.R**. 
 - **ECOSTRESS** which holds the corrected **air_temperatures** and corresponding **biting_rate** and **transmission_rate** maps, created in **lst_to_air_b_tx.R**
+- **Landcover** which holds a shapefile with flattened geometries for the different landcover types of interest, created in **flatten_landcovers.R**
 
 Under **results** an R markdown file and corresponding html file can be found that describes the modeling approach and houses the following figures: 
 - fig 2 - Mordecai equation plot

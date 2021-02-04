@@ -36,30 +36,31 @@ ggplot(Comp_temp, aes(x = ECOSTRESS, y =Air_Temp)) +
   ylim(min = 5, max = 45) + 
   xlim(min = 5, max = 60) + 
   guides(alpha = FALSE) +
-  theme(legend.title = element_blank())
+  theme(legend.title = element_blank()) + 
+  scale_color_manual(values = c("gray64"))
 ```
 
 ### Figure 4: breakdown vs vegetation
 ```{r vegetation, warning = FALSE, echo = FALSE}
-# ggplot(Comp_temp, aes(x =  ECOSTRESS, y =Air_Temp)) + 
-#   geom_point(aes(color = V, alpha = .2)) +
-#   # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
-#   stat_function(fun = function(x){x}, show.legend = TRUE) + 
-#   labs(title = "Land surface temperature vs. air temperature by vegetation fraction", 
-#        subtitle = "June - September, 2018 - 2020, San Joaquin Valley", 
-#        caption = "Air temperature values from CIMIS weather stations.
-#        Land surface temperature from ECOSTRESS") + 
-#   ylab("Air Temperature (C)") + 
-#   xlab("Land Surface Temperature (C)") + 
-#   ylim(min = 0, max = 45) + 
-#   xlim(min = 0, max = 60) + 
-#   scale_colour_gradient(low = "tan", high = "darkgreen") + 
-#   labs(color = "Vegetation fraction") + 
-#   # theme_dark() + 
-#   guides(alpha = FALSE)
+ggplot(Comp_temp, aes(x =  ECOSTRESS, y =Air_Temp)) +
+  geom_point(aes(color = V, alpha = .2)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) +
+  stat_function(fun = function(x){x}, show.legend = TRUE) +
+  labs(title = "Land surface temperature vs. air temperature by vegetation fraction",
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley",
+       caption = "Air temperature values from CIMIS weather stations.
+       Land surface temperature from ECOSTRESS") +
+  ylab("Air Temperature (C)") +
+  xlab("Land Surface Temperature (C)") +
+  ylim(min = 0, max = 45) +
+  xlim(min = 0, max = 60) +
+  scale_colour_gradient(low = "tan", high = "darkgreen") +
+  labs(color = "Vegetation fraction") +
+  # theme_dark() +
+  guides(alpha = FALSE)
 
 ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) + 
-    geom_point(aes(color = ECOSTRESS, alpha = .2)) +
+    geom_point(aes(color = ECOSTRESS)) +
   # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
   geom_smooth(method = "lm") + 
   labs(title = "Fractional vegetation vs. air temperature", 
@@ -67,12 +68,71 @@ ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) +
   ylab("Air Temperature (C)") + 
   xlab("Fractional vegetation") + 
   ylim(min = 0, max = 45) + 
-  scale_colour_gradient(low = "green3", high = "red") + 
+  scale_colour_gradientn(colors = c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red")) + 
   labs(color = "Land surface temperature (C)") + 
   # theme_dark() + 
   guides(alpha = FALSE)
 
+ggplot(Comp_temp, aes(x =  V, y =ECOSTRESS)) + 
+    geom_point(aes(color = Air_Temp)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. land surface temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  ylab("LST (C)") + 
+  xlab("Fractional vegetation") + 
+  ylim(min = 0, max = 45) + 
+  scale_colour_gradientn(colors = c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red")) + 
+  labs(color = "Air Temperature (C)") + 
+  # theme_dark() + 
+  guides(alpha = FALSE)
+
 ```
+
+```{r, echo = FALSE, include = FALSE}
+ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) + 
+    geom_point(aes(color = hour(dt) + minute(dt)/60)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  ylab("Air Temperatre (C)") + 
+  xlab("Fractional vegetation") + 
+  ylim(min = 0, max = 45) + 
+  scale_colour_gradientn(colors = c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red", "orange", "yellow", "white", "steelblue1", "blue", "darkblue")) + 
+  labs(color = "Hour of day") + 
+  # theme_dark() + 
+  guides(alpha = FALSE)
+
+ggplot(filter(Comp_temp, hour(dt) %in% 9:13), aes(x =  V, y =Air_Temp)) + 
+    geom_point(aes(color = hour(dt) + minute(dt)/60)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  ylab("Air Temperatre (C)") + 
+  xlab("Fractional vegetation") + 
+  ylim(min = 0, max = 45) + 
+  # scale_colour_gradientn(colors = c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red", "orange", "yellow", "white", "steelblue1", "blue", "darkblue")) + 
+  labs(color = "Hour of day") + 
+  # theme_dark() + 
+  guides(alpha = FALSE)
+
+ggplot(Comp_temp, aes(x =  hour(dt) + minute(dt)/60, y =Air_Temp)) + 
+    geom_point(aes(color = V)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  # geom_smooth(method = "lm") + 
+  labs(title = "Hour of day vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  ylab("Air Temperatre (C)") + 
+  xlab("Hour of day") + 
+  ylim(min = 0, max = 45) + 
+  scale_colour_gradientn(colors = c("red", "orange", "yellow", "white", "steelblue1", "blue", "darkblue")) + 
+  labs(color = "Fractional vegetation") + 
+  # theme_dark() + 
+  guides(alpha = FALSE)
+```
+
 
 What model should we choose? 
 
@@ -144,18 +204,19 @@ final <- lm2
 #fit values
 Comp_temp$air_temp_modeled <- final$fitted.values
 
-ggplot(Comp_temp, aes(y = Air_Temp, x = air_temp_modeled)) + 
+ggplot(Comp_temp, aes(y = air_temp_modeled, x = Air_Temp)) + 
   geom_point(aes(alpha = .2)) +
   stat_function(fun = function(x){x}, aes(color = "One to one"), show.legend = TRUE) + 
   labs(title = "Modeled vs. Observed Air Temperature", 
        subtitle = "San Joaquin Valley, June - September, 2018 - 2020", 
        caption = "") + 
-  xlab("Modeled Air Temperature (C)") + 
-  ylab("Observed Air Temperature (C)") + 
+  xlab("Observed Air Temperature (C)") + 
+  ylab("Modeled Air Temperature (C)") + 
   ylim(c(0, 45)) + 
   xlim(c(0, 45)) + 
   geom_smooth(method = "lm", se = FALSE, aes(color = "Linear regression")) +
   guides(alpha = FALSE) +
+  scale_color_manual(values = c("#D55E00", "gray64")) + 
   theme(legend.title = element_blank())
 ```
 

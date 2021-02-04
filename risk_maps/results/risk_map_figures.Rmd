@@ -11,7 +11,10 @@ library(ggplot2)
 library(here)
 library(lubridate)
 library(stringr)
+library(dplyr)
+library(tidyr)
 library(raster)
+library(zoo)
 ```
 
 
@@ -24,24 +27,126 @@ coef = 100
 
 ggplot(mordecai, aes(x = temperature)) +
   stat_function(aes(col = "Biting rate"), 
-                fun = function(x){(1.67*10^-4) * x * (x- 2.3) * (32.0 - x)^(1/2) * coef}, show.legend = TRUE) + #bite x 100
+                size = 1, 
+                fun = function(x){(1.67*10^-4) * x * (x- 2.3) * (32.0 - x)^(1/2) * coef}, show.legend = TRUE, n = 1000000) + #bite 
   stat_function(aes(col = "Transmission probability"), 
-                fun = function(x){-(2.94*10^-3) * x * (x - 11.3) * (x - 41.9)}, show.legend = TRUE) + #transmission
+                size = 1, 
+                fun = function(x){-(2.94*10^-3) * x * (x - 11.3) * (x - 41.9)}, show.legend = TRUE, n = 1000) + #transmission
   xlim(0, 45) +
   scale_y_continuous(
-    name = "Transmission probability",
+    name = "Transmission probability (%)",
     limits = c(0,30),
     sec.axis = sec_axis(~./coef, name="Biting rate")) + 
   theme(legend.title = element_blank()) + 
-  labs(title = "Culex Tarsalis biting and West Nile Virus transmission rates by temperature", 
+  labs(title = "Culex Tarsalis biting and West Nile virus transmission rates by temperature", 
        subtitle = "From Mordecai et. al., 2019") + 
-  xlab("Temperature (C)") 
+  xlab("Temperature (C)") + 
+  scale_color_manual(values = c("red", "blue")) + 
+  guides(size = FALSE)
 ```
 
 ### Figure 6 - Tx wrt time of day (land cover type)
-```{r day_tiime_series, echo=FALSE, warning=FALSE}
+```{r day_time_series, echo=FALSE, warning=FALSE}
+landcover_avg <- readRDS(here::here("risk_maps",
+                                   "data", 
+                                   "processed_data", 
+                                   "landcover_avgs.RData"))
+
+# landcover_avg$landcover <- as.factor(landcover_avg$landcover)
+
+overview <- filter(landcover_avg, landcover %in% c("Urban", "Agriculture"))
+overview$landcover <- factor(overview$landcover, levels = c("Urban", "Agriculture"))
+
+#overview plots
+ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = landcover, shape = landcover)) + 
+      geom_point(size = 2) + #aes(alpha = .2)
+      # geom_smooth(method = "lm",
+      #         formula = y ~
+      #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)),
+      #         se = FALSE) +
+      # geom_line(aes(y=rollmedian(air_temperature, 7, na.pad=TRUE))) + 
+      xlab("Hour of day") +
+      ylab("Air Temperature (C)") + 
+      labs(title = "Air temperature over the course of the day", 
+      subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
+
+ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landcover, shape = landcover)) + 
+      geom_point(size = 2) + 
+      # geom_smooth(method = "lm",
+      #         formula = y ~
+      #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + 
+      #           I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)) + 
+      #           I(sin((2*2*2*pi*(x))/24)) + I(cos((2*2*2*pi*(x))/24)),
+      #         se = FALSE) +
+      xlab("Hour of day") +
+      ylab("Biting Rate") + 
+      labs(title = "Biting rate over the course of the day", 
+      subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
+
+ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = landcover, shape = landcover)) + 
+      geom_point(size = 2) + 
+      # geom_smooth(method = "lm",
+      #         formula = y ~
+      #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + 
+      #           I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)),
+      #         se = FALSE) +
+      xlab("Hour of day") +
+      ylab("Transmission Probability (%)") + 
+      labs(title = "Transmission probability over the course of the day", 
+      subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
+
+# These are not super helpful so I mught just not include them...
+
+# ag_specs <- filter(landcover_avg, landcover %in% c("Fodder", "Fruit", "Fruit Tree", "Nuts", "Vegetable", "Uncultivated"))
+
+# #ag plots
+# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = landcover)) + 
+#       geom_point() + 
+#       # geom_smooth(method = "lm", 
+#       #         formula = y ~ 
+#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
+#       #         se = FALSE) + 
+#       xlab("Hour of day") +
+#       ylab("Air Temperature (C)") + 
+#       labs(title = "Air temperature over the course of the day", 
+#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+#       # scale_color_manual(values = newcols) + 
+#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
+# 
+# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landcover)) + 
+#       geom_point() + 
+#       # geom_smooth(method = "lm", 
+#       #         formula = y ~ 
+#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
+#       #         se = FALSE) + 
+#       xlab("Hour of day") +
+#       ylab("Biting Rate") + 
+#       labs(title = "Biting rate over the course of the day", 
+#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+#       # scale_color_manual(values = newcols) + 
+#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
+# 
+# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = landcover)) + 
+#       geom_point() + 
+#       # geom_smooth(method = "lm", 
+#       #         formula = y ~ 
+#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
+#       #         se = FALSE) + 
+#       xlab("Hour of day") +
+#       ylab("Transmission Probability (%)") + 
+#       labs(title = "Transmission probability over the course of the day", 
+#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
+#       # scale_color_manual(values = newcols) + 
+#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
 
 ```
+  
 
 ### Figure 7 - maps for each time of day
 ```{r four_maps, echo=FALSE, warning=FALSE}
@@ -81,8 +186,6 @@ four_panel <- function(type, limits){
                                      type, 
                                      chosen_four[4]))
   
-  # pal <- colorRampPalette(c("blue", "white", "red"))
-  # pal <- colorRampPalette(c("blue", "green2", "yellow", "orange", "red"))
   pal <- colorRampPalette(c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red"))
   
   plot(dawn, 
@@ -138,12 +241,189 @@ four_panel("biting_rates", limits = c(0,.27))
 four_panel("transmission_rates", limits = c(0,20))
 ```
 
+### Figure 7.5 - maps of errors
+```{r erroes, echo = FALSE}
+chosen_four <- list.files(here::here("risk_maps",
+                                     "data", 
+                                     "raw_data", 
+                                     "ECOSTRESS", 
+                                     "chosen_four"))
+
+STANDARD_ERROR <- 2.886
+
+four_panel <- function(risk_function, limits){
+  date <- ymd(substr(chosen_four, 14, 23))
+  hhmmss <- str_extract(chosen_four, regex('[0-9]{2}:{1}[0-9]{2}:{1}[0-9]{2}'))
+  dt <- ymd_hms(paste(date, hhmmss), tz = "America/Los_Angeles")
+  
+  night <- raster(here::here("risk_maps",
+                                     "data", 
+                                     "processed_data", 
+                                     "ECOSTRESS", 
+                                     "air_temperature", 
+                                     chosen_four[1]))
+  dawn <- raster(here::here("risk_maps",
+                                     "data", 
+                                     "processed_data", 
+                                     "ECOSTRESS", 
+                                     "air_temperature", 
+                                     chosen_four[2]))
+  day <- raster(here::here("risk_maps",
+                                     "data", 
+                                     "processed_data", 
+                                     "ECOSTRESS", 
+                                     "air_temperature", 
+                                     chosen_four[3]))
+  dusk <- raster(here::here("risk_maps",
+                                     "data", 
+                                     "processed_data", 
+                                     "ECOSTRESS", 
+                                     "air_temperature", 
+                                     chosen_four[4]))
+  
+  get_error <- function(temp_raster){
+
+    max_error_by_pixel <- function(temperature){
+
+      lower_bound <- temperature - STANDARD_ERROR*1.96
+      upper_bound <- temperature + STANDARD_ERROR*1.96
+
+      max <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=TRUE)$objective
+      min <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=FALSE)$objective
+
+      return(max - min)
+    }
+
+    values <- raster::values(temp_raster)
+    errors <- sapply(values, max_error_by_pixel)
+    values(temp_raster) <- errors
+    return(temp_raster)
+  }
+  
+  dawn <- get_error(dawn)
+  day <- get_error(day)
+  dusk <- get_error(dusk)
+  night <- get_error(night)
+  
+  pal <- colorRampPalette(c("white", "yellow", "orange", "red"))
+  
+  plot(dawn, 
+       col = pal(50), 
+       zlim=limits,
+       xlab="Longitude", 
+       ylab = "Latitude")
+  title(paste0("Dawn (", dt[2],")"))
+  
+  plot(day, 
+       col = pal(50), 
+       zlim=limits,
+       xlab="Longitude", 
+       ylab = "Latitude")
+  title(paste0("Day (", dt[3],")"))
+  
+  plot(dusk, 
+       col = pal(50), 
+       zlim=limits,
+       xlab="Longitude", 
+       ylab = "Latitude")
+  title(paste0("Dusk (", dt[4],")"))
+  
+  plot(night, 
+       col = pal(50), 
+       zlim=limits,
+       xlab="Longitude", 
+       ylab = "Latitude")
+  title(paste0("Night (", dt[1],")"))
+}
+```
+
+#### Biting rates errors
+```{r b_maps_e, echo = FALSE}
+bite <- function(T){
+  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+  bite <- ifelse(is.nan(bite), 0, bite)
+  return(bite)
+}
+
+so_i_have_it <- four_panel(bite, limits = c(0,.27))
+so_i_have_it
+```
+
+#### transmission rates errors
+```{r tx_maps_e, echo = FALSE}
+transmit <- function(T){
+  -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
+}
+
+four_panel(transmit, limits = c(0,20))
+```
+
 ### Figure 8 - statistical illustration showing breakdown by land cover
 
 * Different ag types vs urban
 * Heterogeneity within urban
-* Veg continuous vs risk
 
-```{r lst_scatter, echo=FALSE, warning=FALSE}
+```{r landcover_breakdown} 
+#, echo=FALSE, warning=FALSE, include = FALSE
+all_pixels <- readRDS(here::here("risk_maps",
+                               "data", 
+                               "processed_data", 
+                               "all_pixels.RData"))
 
+ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
+all_pixels$landcover <- factor(all_pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
+
+plot_densities <- function(type, formaltype, xlim, ylim){
+  print(filter(all_pixels, landcover %in% "Urban") %>% 
+    ggplot(aes(x = get(type), fill= time_of_day, alpha = 0.2)) + 
+    geom_density() + 
+    # labs(title = "Urban") + 
+    xlim(xlim) + 
+    ylim(ylim) + 
+    guides(alpha = FALSE, fill = guide_legend(title = "Selected image time")) +
+      xlab(formaltype) + 
+      ylab("Density"))
+  
+  print(filter(all_pixels, landcover %in% ag_types) %>% 
+    ggplot(aes(x = get(type), fill= time_of_day, alpha = 0.2)) + 
+    geom_density() + 
+    # labs(title = "Agriculture") + 
+    xlim(xlim) + 
+    ylim(ylim) + 
+    guides(alpha = FALSE, fill = guide_legend(title = "Selected image time")) +
+      xlab(formaltype) + 
+      ylab("Density"))
+}
+
+plot_densities("air_temperature", "Air Temperature", c(12, 37), c(0, 1.7))
+plot_densities("biting_rate", "Biting Rate", c(0, .254), c(0, 250))
+plot_densities("transmission_prob", "Transmission Probability", c(0, 26), c(0, 1.8))
+
+filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%
+  ggplot(aes(x = air_temperature, col= landcover, alpha = 0.2)) + 
+  geom_density() + 
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab("Air temperature") + 
+      ylab("Density") + 
+  labs(title = "Daytime air temperatures by crop type",
+       subtitle = "August 4th, 2019 at 2:15pm")
+
+filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%
+  ggplot(aes(x = biting_rate, col= landcover, alpha = 0.2)) + 
+  geom_density() + 
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab("Biting rate") + 
+      ylab("Density") + 
+  labs(title = "Daytime biting rates by crop type",
+       subtitle = "August 4th, 2019 at 2:15pm")
+
+filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%
+  ggplot(aes(x = transmission_prob, col= landcover, alpha = 0.2)) + 
+  geom_density() + 
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab("Transmission probability") + 
+      ylab("Density") + 
+  labs(title = "Daytime transmission probability by crop type",
+       subtitle = "August 4th, 2019 at 2:15pm")
 ```
+

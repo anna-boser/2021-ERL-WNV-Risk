@@ -21,7 +21,9 @@ landcover_sf <- st_read(here::here("risk_maps",
                                 "landcover.shp"))
 
 bite <- function(T){
-  (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+  bite[is.nan(bite)] <- 0
+  return(bite)
 }
 
 transmit <- function(T){

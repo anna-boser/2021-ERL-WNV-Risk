@@ -69,7 +69,7 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = la
       ylab("Air Temperature (C)") + 
       labs(title = "Air temperature over the course of the day", 
       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "blue")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
 
 ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landcover, shape = landcover)) + 
@@ -81,10 +81,11 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landco
       #           I(sin((2*2*2*pi*(x))/24)) + I(cos((2*2*2*pi*(x))/24)),
       #         se = FALSE) +
       xlab("Hour of day") +
+      ylim(0,.26) + 
       ylab("Biting Rate") + 
       labs(title = "Biting rate over the course of the day", 
       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "blue")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
 
 ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = landcover, shape = landcover)) + 
@@ -95,55 +96,12 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = 
       #           I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)),
       #         se = FALSE) +
       xlab("Hour of day") +
+      ylim(0,20) + 
       ylab("Transmission Probability (%)") + 
       labs(title = "Transmission probability over the course of the day", 
       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "#009E73")) + 
+      scale_color_manual(values = c(Urban = "#D55E00", All = "#E69F00", Agriculture = "blue")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type"))
-
-# These are not super helpful so I mught just not include them...
-
-# ag_specs <- filter(landcover_avg, landcover %in% c("Fodder", "Fruit", "Fruit Tree", "Nuts", "Vegetable", "Uncultivated"))
-
-# #ag plots
-# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = landcover)) + 
-#       geom_point() + 
-#       # geom_smooth(method = "lm", 
-#       #         formula = y ~ 
-#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
-#       #         se = FALSE) + 
-#       xlab("Hour of day") +
-#       ylab("Air Temperature (C)") + 
-#       labs(title = "Air temperature over the course of the day", 
-#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-#       # scale_color_manual(values = newcols) + 
-#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
-# 
-# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landcover)) + 
-#       geom_point() + 
-#       # geom_smooth(method = "lm", 
-#       #         formula = y ~ 
-#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
-#       #         se = FALSE) + 
-#       xlab("Hour of day") +
-#       ylab("Biting Rate") + 
-#       labs(title = "Biting rate over the course of the day", 
-#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-#       # scale_color_manual(values = newcols) + 
-#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
-# 
-# ggplot(ag_specs, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = landcover)) + 
-#       geom_point() + 
-#       # geom_smooth(method = "lm", 
-#       #         formula = y ~ 
-#       #           I(sin((2*pi*(x))/24)) + I(cos((2*pi*(x))/24)) + I(sin((2*2*pi*(x))/24)) + I(cos((2*2*pi*(x))/24)), 
-#       #         se = FALSE) + 
-#       xlab("Hour of day") +
-#       ylab("Transmission Probability (%)") + 
-#       labs(title = "Transmission probability over the course of the day", 
-#       subtitle = "Bakersfield and surrounding area, June - September, 2018 - 2020") + 
-#       # scale_color_manual(values = newcols) + 
-#       guides(alpha = FALSE, col = guide_legend(title="Landcover type"))
 
 ```
   
@@ -373,8 +331,18 @@ all_pixels <- readRDS(here::here("risk_maps",
 ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
 all_pixels$landcover <- factor(all_pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
 
+newrow <- all_pixels[1,]
+newrow[,1] <- "Day"
+newrow[,4] <- "Urban"
+newrow[,5] <- NA
+newrow[,6] <- .000001
+newrow[,7] <- NA
+newrow[,8] <- TRUE
+
+all_pixels <- rbind(all_pixels, newrow)
+
 plot_densities <- function(type, formaltype, xlim, ylim){
-  print(filter(all_pixels, landcover %in% "Urban") %>% 
+  print(filter(all_pixels, Urban == TRUE) %>% 
     ggplot(aes(x = get(type), fill= time_of_day, alpha = 0.2)) + 
     geom_density() + 
     # labs(title = "Urban") + 

@@ -20,7 +20,7 @@ chosen_four <- list.files(here::here("risk_maps",
 
 bite <- function(T){
   bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
-  # bite <- ifelse(is.nan(bite), 0, bite)
+  bite <- ifelse(is.nan(bite), 0, bite)
   return(bite)
 }
 
@@ -61,6 +61,11 @@ pixelify <- function(file, time_of_day){
                                    lc)
   }
   
+  all_pixels$Urban <- ifelse(is.na(raster::values(raster::mask(airtemp_raster, 
+                                                               filter(landcover_shp, landcover == "Urban")))), 
+                             FALSE, 
+                             TRUE)
+  
   return (all_pixels)
 }
       
@@ -70,14 +75,6 @@ day <- pixelify(chosen_four[3], "Day")
 dusk <- pixelify(chosen_four[4], "Dusk")
 
 all_pixels <- rbind(night, dawn, day, dusk)
-
-#if you want to look at the other scenes
-
-# for (image in all_other_images){
-#   all_pixels <- rbind(all_pixels, pixelify(image, NA))
-# }
-
-all_pixels$biting_rate <- ifelse(is.nan(all_pixels$biting_rate), 0, all_pixels$biting_rate)
 
 saveRDS(all_pixels, here::here("risk_maps",
                                "data", 

@@ -263,7 +263,7 @@ four_panel <- function(risk_function, limits){
   dusk <- get_error(dusk)
   night <- get_error(night)
   
-  pal <- colorRampPalette(c("white", "yellow", "orange", "red"))
+  pal <- colorRampPalette(c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red"))
   
   plot(dawn, 
        col = pal(50), 
@@ -374,15 +374,6 @@ filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%
       xlab("Air temperature") + 
       ylab("Density") + 
   labs(title = "Daytime air temperatures by crop type",
-       subtitle = "August 4th, 2019 at 2:15pm")
-
-filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%
-  ggplot(aes(x = biting_rate, col= landcover, alpha = 0.2)) + 
-  geom_density() + 
-    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
-      xlab("Biting rate") + 
-      ylab("Density") + 
-  labs(title = "Daytime biting rates by crop type",
        subtitle = "August 4th, 2019 at 2:15pm")
 
 filter(all_pixels, time_of_day == "Day", landcover %in% ag_types) %>%

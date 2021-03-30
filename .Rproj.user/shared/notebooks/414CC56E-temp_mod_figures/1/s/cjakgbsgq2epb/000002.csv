@@ -1,0 +1,5 @@
+"0","#first read in the dataset"
+"0","Comp_temp <- readRDS(here::here(""temperature_modeling"", "
+"0","                              ""data"", "
+"0","                              ""processed_data"", "
+"0","                              ""merged_df.RData""))"

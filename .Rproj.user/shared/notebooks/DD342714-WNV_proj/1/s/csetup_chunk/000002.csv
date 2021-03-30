@@ -1,0 +1,50 @@
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0","library(here)"
+"0","library(data.table)"
+"0","library(lubridate)"
+"0","library(stringr)"
+"0","library(dplyr)"
+"0","library(sp)"
+"0","library(raster)"
+"0","library(ggplot2)"
+"0","library(suncalc)"
+"0","library(tidyr)"
+"2","
+Attaching package: ‘tidyr’
+
+"
+"2","The following object is masked from ‘package:raster’:
+
+    extract
+
+"
+"0","library(purrr)"
+"2","
+Attaching package: ‘purrr’
+
+"
+"2","The following object is masked from ‘package:data.table’:
+
+    transpose
+
+"
+"0","library(sf)"
+"2","Linking to GEOS 3.8.1, GDAL 3.1.4, PROJ 6.3.1
+"
+"0","library(matlib)"
+"2","Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio
+"
+"2","Error in dyn.load(file, DLLpath = DLLpath, ...) : 
+  unable to load shared object '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/rgl/libs/rgl.so':
+  dlopen(/Library/Frameworks/R.framework/Versions/4.0/Resources/library/rgl/libs/rgl.so, 6): Library not loaded: /opt/X11/lib/libGLU.1.dylib
+  Referenced from: /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rgl/libs/rgl.so
+  Reason: image not found
+"
+"2","Error: package or namespace load failed for ‘matlib’:
+ .onLoad failed in loadNamespace() for 'rgl', details:
+  call: NULL
+  error: 	Loading rgl's DLL failed. 
+	This build of rgl depends on XQuartz, which you can download from xquartz.org.
+"

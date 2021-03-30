@@ -1,0 +1,153 @@
+---
+title: "Temperature Modeling Restults and Plots"
+author: "Anna Boser"
+date: "1/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(here)
+library(lmtest)
+```
+
+
+```{r getdata, echo=FALSE}
+#first read in the dataset
+Comp_temp <- readRDS(here::here("temperature_modeling", 
+                              "data", 
+                              "processed_data", 
+                              "merged_df.RData"))
+```
+
+
+### Figure S1: LST vs. Air temp scatterplot
+```{r lst_scatter, echo=FALSE, warning=FALSE}
+ggplot(Comp_temp, aes(x = ECOSTRESS, y =Air_Temp)) + 
+  geom_point(aes(alpha = .2)) +
+  stat_function(fun = function(x){3.7001008 + 1.0591731*x - 0.0086070*x^2 }, aes(color = "Quadratic regression"), size = 1, show.legend = TRUE) + 
+  stat_function(fun = function(x){x}, aes(color = "One to one"), show.legend = TRUE) + 
+  labs(title = "ECOSTRESS LST vs. CIMIS air temperature") + 
+  ylab("Air Temperature (C)") + 
+  xlab("Land Surface Temperature (C)") + 
+  ylim(min = 5, max = 45) + 
+  xlim(min = 5, max = 60) + 
+  guides(alpha = FALSE) +
+  theme(legend.title = element_blank()) + 
+  scale_color_manual(values = c("gray64", "red")) + 
+  theme_bw()
+```
+
+
+### Figure S2: breakdown vs vegetation
+```{r vegetation, warning = FALSE, echo = FALSE}
+ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) + 
+    geom_point(aes(color = ECOSTRESS)) +
+  # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature") + 
+  ylab("Air Temperature (C)") + 
+  xlab("Fractional vegetation") + 
+  ylim(min = 0, max = 45) + 
+  scale_colour_gradientn(colors = c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red")) + 
+  labs(color = "Land surface temperature (C)") + 
+  theme_update() + 
+  guides(alpha = FALSE)
+
+```
+
+
+What model should we choose? 
+
+```{r choose model, warning=FALSE, echo=FALSE, include = FALSE}
+# models to choose from: 
+# simple linear 
+# quardrtic
+# cubic
+# with and without veg
+# what about veg interactions? 
+
+lm1 <- lm(Air_Temp ~ ECOSTRESS, data = Comp_temp)
+lm2 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2), data = Comp_temp)
+lm3 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2) + I(ECOSTRESS^3), data = Comp_temp)
+lm4 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2) + V, data = Comp_temp)
+
+ggplot(Comp_temp, aes(y =lm1$resid, x = ECOSTRESS)) + 
+    geom_point(aes(color = V, alpha = .2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  scale_colour_gradient(low = "tan", high = "green3") + 
+  labs(color = "Fv") + 
+  guides(alpha = FALSE)
+
+ggplot(Comp_temp, aes(y =lm2$resid, x = ECOSTRESS)) + 
+    geom_point(aes(color = V, alpha = .2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  scale_colour_gradient(low = "tan", high = "green3") + 
+  labs(color = "Fv") + 
+  guides(alpha = FALSE)
+
+ggplot(Comp_temp, aes(y =lm3$resid, x = ECOSTRESS)) + 
+    geom_point(aes(color = V, alpha = .2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  scale_colour_gradient(low = "tan", high = "green3") + 
+  labs(color = "Fv") + 
+  guides(alpha = FALSE)
+
+ggplot(Comp_temp, aes(y =lm4$resid, x = ECOSTRESS)) + 
+    geom_point(aes(color = V, alpha = .2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "Fractional vegetation vs. air temperature", 
+       subtitle = "June - September, 2018 - 2020, San Joaquin Valley") + 
+  scale_colour_gradient(low = "tan", high = "green3") + 
+  labs(color = "Fv") + 
+  guides(alpha = FALSE)
+```
+
+When choosing between the linear, quadratic, and cubic, though they're all statistically significant, we choose quadratic because:
+
+ * the linear residuals are not homoscedastic
+ * the quadratic residuals are homoscedastic and the cubic only increases the Adjusted $R^2$ by .001 (0.8474 to 0.8488). 
+
+We then do not include vegetation in the quadratic because: 
+
+ * It is not statistically significant and the adjusted $R^2$ actually decreases by .001
+
+### Figure S1: Corrected relationship w/ 1:1 scatter
+
+```{r 1to1_scatter, warning = FALSE, echo = FALSE}
+#chosen model
+final <- lm2
+
+ggplot(Comp_temp, aes(y = Air_Temp, x = air_temp_modeled)) + 
+  geom_point(aes(alpha = .2)) +
+  stat_function(fun = function(x){x}, aes(color = "One to one"), show.legend = TRUE) + 
+  labs(title = "Modeled vs. observed air temperature") + 
+  xlab("Modeled Air Temperature (C)") + 
+  ylab("Observed Air Temperature (C)") + 
+  ylim(c(5, 42)) + 
+  xlim(c(5, 42)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear regression")) +
+  guides(alpha = FALSE) +
+  scale_color_manual(values = c("red", "gray64")) + 
+  theme(legend.title = element_blank()) +
+  theme_bw()
+```
+
+Test for homoscedasticity
+```{r}
+lmtest::bptest(final)  # Breusch-Pagan test
+```
+
+What are our confidence intervals for this? How much error can we expect? 
+```{r, include=FALSE, echo = FALSE}
+summary(final)
+```
+
+Even though our Adjusted $R^2$ is 0.8474, the residual standard error is 2.886, which is rather large. That means that we have a plus or minus 2.886*1.96=5.65656 confidence interval, which is not great. Our confidence interval is ranging over 10 C... 

@@ -1,0 +1,5 @@
+"0","transmit <- function(T){"
+"0","  -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)"
+"0","}"
+"0",""
+"0","four_panel(transmit, limits = c(0,20))"

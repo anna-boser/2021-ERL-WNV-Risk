@@ -17,9 +17,9 @@ It is organized as a R project in two parts: LST to air temperature modeling **t
 These data are then processed and matched together in the **merge_data.R** file that can be found in the **code** folder to create **merged_df.RData** that can be found in the **processed_data** folder. This dataset is then further modified by creating a "Vegetation" category by performing linear unmixing of the the Landsat 8 reflectances. The final dataset used to generate results is named **modeling_df.Rdata**. 
 
 Under **results** an R markdown file and corresponding html file can be found that describes the modeling approach and houses the following figures: 
-- fig 3 - LST vs air temp scatterplots - raw data 
-- fig 4 - breakdown vs vegetation - [showing no real impact?] 
-- fig 5 - Corrected relationship w/ nice 1:1 scatter
+- fig S1 - LST vs air temp scatterplots - raw data, and Corrected relationship w/ nice 1:1 scatter
+- fig S2 - breakdown vs vegetation 
+- some model selection details and statistical tests
 
 ## Risk Maps
 
@@ -45,11 +45,10 @@ In the **processed_data** folder you can find the following:
 - **ECOSTRESS** which holds the corrected **air_temperatures** and corresponding **biting_rate** and **transmission_rate** maps, created in **lst_to_air_b_tx.R**
 - **Landcover** which holds a shapefile with flattened geometries for the different landcover types of interest, created in **flatten_landcovers.R**
 
-Under **results** an R markdown file and corresponding html file can be found that describes the modeling approach and houses the following figures: 
+Under **results** an R markdown file and corresponding html file can be found that describes the modeling approach and houses the following: 
 - fig 2 - Mordecai equation plot
-- fig 6 - Tx wrt time of day (land cover type)
-- fig 7 - maps for each time of day
-- fig 8 - statistical illustration showing breakdown by land cover 
-    - Different ag types vs urban 
-    - Heterogeneity within urban 
-    - Veg continuous vs risk 
+- fig 3 - Maps for each time of day
+- fig S3 - mapped errors at different times of day
+- fig 4 - Distribution of crop types during the daytime
+- fig 5 - urban and ag diurnal time series
+- various statistical tests referenced in the manuscript

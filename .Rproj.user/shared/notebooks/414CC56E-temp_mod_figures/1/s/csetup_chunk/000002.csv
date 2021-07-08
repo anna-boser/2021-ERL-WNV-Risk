@@ -1,8 +1,6 @@
 "0","knitr::opts_chunk$set(echo = TRUE)"
 "0","library(ggplot2)"
 "0","library(here)"
-"2","here() starts at /Users/annaboser/Documents/GitHub/WNV-paper
-"
 "0","library(lmtest)"
 "2","Loading required package: zoo
 "

@@ -1,0 +1,6 @@
+Misc_not_used_in_paper.Rmd
+risk_maps/data/raw_data/Urban/original/i15_crop_mapping_2016_shp
+WNV_3min.pptx
+WNV_presentation.pptx
+WNVRiskMapsFigure.pptx
+.Rhistory

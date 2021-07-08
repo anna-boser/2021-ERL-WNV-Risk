@@ -72,7 +72,16 @@ lm1 <- lm(Air_Temp ~ ECOSTRESS, data = Comp_temp)
 lm2 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2), data = Comp_temp)
 lm3 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2) + I(ECOSTRESS^3), data = Comp_temp)
 lm4 <- lm(Air_Temp ~ ECOSTRESS + I(ECOSTRESS^2) + V, data = Comp_temp)
+```
 
+```{r}
+AIC(lm1)
+AIC(lm2)
+AIC(lm3)
+AIC(lm4)
+```
+
+```{r}
 ggplot(Comp_temp, aes(y =lm1$resid, x = ECOSTRESS)) + 
     geom_point(aes(color = V, alpha = .2)) +
   geom_smooth(method = "lm") + 
@@ -110,14 +119,20 @@ ggplot(Comp_temp, aes(y =lm4$resid, x = ECOSTRESS)) +
   guides(alpha = FALSE)
 ```
 
+Original submission: 
+
 When choosing between the linear, quadratic, and cubic, though they're all statistically significant, we choose quadratic because:
 
- * the linear residuals are not homoscedastic
- * the quadratic residuals are homoscedastic and the cubic only increases the Adjusted $R^2$ by .001 (0.8474 to 0.8488). 
+ * the linear residuals are obviously not homoscedastic
+ * the quadratic residuals look more homoscedastic and the cubic only increases the Adjusted $R^2$ by .001 (0.8474 to 0.8488). 
 
 We then do not include vegetation in the quadratic because: 
 
  * It is not statistically significant and the adjusted $R^2$ actually decreases by .001
+ 
+Revision: 
+
+We choose the model with the highest AIC. 
 
 ### Figure S1: Corrected relationship w/ 1:1 scatter
 

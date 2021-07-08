@@ -15,6 +15,7 @@ library(dplyr)
 library(tidyr)
 library(raster)
 library(zoo)
+library(latex2exp)
 ```
 
 
@@ -36,13 +37,13 @@ ggplot(mordecai, aes(x = temperature)) +
   scale_y_continuous(
     name = "Transmission probability (%)",
     limits = c(0,30),
-    sec.axis = sec_axis(~./coef, name="Biting rate")) + 
+    sec.axis = sec_axis(~./coef, name=TeX("Biting rate ($day^{-1}$)"))) + 
   theme(legend.title = element_blank(), 
         # text=element_text(family = "TT Times New Roman")
         ) + 
   labs(title = "Culex tarsalis biting and West Nile virus transmission rates", 
        subtitle = "From Mordecai et. al., 2019") + 
-  xlab("Temperature (C)") + 
+  xlab(TeX("Temperature ($^o$C)")) + 
   scale_color_manual(values = c("red", "blue")) + 
   guides(size = FALSE) + 
   theme_bw()
@@ -301,46 +302,41 @@ four_panel(transmit, limits = c(0,20))
 
 ### Figure 4 - Distribution of crop types during the daytime
 
-#### Instead of just looking at a single daytime frame's pixels, look at all measurements from 11 to 16h (15 frames)
+#### Integrated values over whole day for pixels close to each other
+Because each ECOSTRESS image has a slightly different grid, it is difficult to match the pixels to each other. We do this by matching the closest pixels from each image. 
 
 ```{r}
-day_pixels <- readRDS(here::here("risk_maps",
-                               "data", 
-                               "processed_data", 
-                               "day_pixels.RData"))
 
-ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
-day_pixels$landcover <- factor(day_pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
 
-filter(day_pixels, landcover %in% ag_types) %>%
-  ggplot(aes(x = air_temperature, col= landcover, alpha = 0.2)) + 
-  geom_density() + 
-    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
-      xlab("Air temperature (C)") + 
-      ylab("Density") + 
-  xlim(25, 36.7) + 
-  labs(title = "Daytime air temperature distribution") + 
-  theme_bw()
+# original submission: Instead of just looking at a single daytime frame's pixels, look at all measurements from 11 to 16h (15 frames)
 
-filter(day_pixels, landcover %in% ag_types) %>%
-  ggplot(aes(x = transmission_prob, col= landcover, alpha = 0.2)) + 
-  geom_density() + 
-    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
-      xlab("Transmission probability (%)") + 
-      ylab("Density") + 
-  xlim(14.5, 20) + 
-  labs(title = "Daytime transmission probability distribution") + 
-  theme_bw()
-
+# day_pixels <- readRDS(here::here("risk_maps",
+#                                "data", 
+#                                "processed_data", 
+#                                "day_pixels.RData"))
+# 
+# ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
+# day_pixels$landcover <- factor(day_pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
+# 
 # filter(day_pixels, landcover %in% ag_types) %>%
-#   ggplot(aes(x = biting_rate, col= landcover, alpha = 0.2)) + 
+#   ggplot(aes(x = air_temperature, col= landcover, alpha = 0.2)) + 
 #   geom_density() + 
 #     guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
-#       xlab("Transmission probability") + 
+#       xlab(TeX("Air temperature ($^o$C)")) + 
 #       ylab("Density") + 
-#   # xlim(14.5, 20) + 
-#   labs(title = "Daytime transmission probability by crop type",
-#        subtitle = "11am to 4pm, June-Sept 2018-2020")
+#   xlim(25, 36.7) + 
+#   labs(title = "Daytime air temperature distribution") + 
+#   theme_bw()
+# 
+# filter(day_pixels, landcover %in% ag_types) %>%
+#   ggplot(aes(x = transmission_prob, col= landcover, alpha = 0.2)) + 
+#   geom_density() + 
+#     guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+#       xlab("Transmission probability (%)") + 
+#       ylab("Density") + 
+#   xlim(14.5, 20) + 
+#   labs(title = "Daytime transmission probability distribution") + 
+#   theme_bw()
 ```
 ### f-test on different crop types
 ```{r}
@@ -372,9 +368,9 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = la
       #         se = FALSE) +
       # geom_line(aes(y=rollmedian(air_temperature, 7, na.pad=TRUE))) + 
       xlab("Hour of day") +
-      ylab("Air Temperature (C)") + 
+      ylab(TeX("Air temperature ($^o$C)")) + 
       labs(title = "Diurnal fluctuations in air temperature") + 
-      scale_color_manual(values = c(Urban = "red", All = "#E69F00", Agriculture = "blue")) + 
+      scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
   theme_bw()
 
@@ -388,9 +384,9 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landco
       #         se = FALSE) +
       xlab("Hour of day") +
       ylim(0,.26) + 
-      ylab("Biting Rate") + 
+      ylab(TeX("Biting rate ($day^{-1}$)")) + 
       labs(title = "Diurnal fluctuations in biting rates") + 
-      scale_color_manual(values = c(Urban = "red", All = "#E69F00", Agriculture = "blue")) + 
+      scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
   theme_bw()
 
@@ -405,7 +401,7 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = 
       ylim(0,20) + 
       ylab("Transmission Probability (%)") + 
       labs(title = "Diurnal fluctuations in transmission probabilities") + 
-      scale_color_manual(values = c(Urban = "red", All = "#E69F00", Agriculture = "blue")) + 
+      scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
   theme_bw()
 

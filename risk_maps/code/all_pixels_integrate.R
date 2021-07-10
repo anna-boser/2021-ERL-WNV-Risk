@@ -1,6 +1,6 @@
 # this script makes a dataframe with all the pixels over all images 
-# includung location information, determines their landcover type, 
-# matches them based on location, and then integrates over each location
+# includung location information by resampling all ECOSTRESS images to the first raster, 
+# determines their landcover type and then integrates over each location
 
 library(data.table)
 library(raster)
@@ -32,6 +32,13 @@ transmit <- function(T){
   -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
 }
 
+resample_raster <- raster(here::here("risk_maps", #the raster to resample all others to
+                            "data", 
+                            "processed_data", 
+                            "ECOSTRESS", 
+                            "air_temperature", 
+                            all_files[1]))
+
 pixelify <- function(file){
   
   date <- substr(file, 14, 23)
@@ -46,6 +53,8 @@ pixelify <- function(file){
                                       "ECOSTRESS", 
                                       "air_temperature", 
                                       file))
+  
+  airtemp_raster <- resample(airtemp_raster, resample_raster)
   
   names(airtemp_raster) <- "air_temperature"
   all_pixels <- as.data.frame(airtemp_raster, xy = TRUE)
@@ -84,11 +93,39 @@ pixelify <- function(file){
   return (all_pixels)
 }
 
-day_pixels <- rbindlist(lapply(all_files, pixelify))
+all_pixels <- rbindlist(lapply(all_files, pixelify))
 
-saveRDS(day_pixels, here::here("risk_maps",
+saveRDS(all_pixels, here::here("risk_maps",
                                "data", 
                                "processed_data", 
                                "all_pixels_location_match.RData"))
 
-#match by location and take the average
+# take the average over time (which should average the day) for 
+# air temperature, biting rate, and transmission prob
+
+all_pixels_integrate <- all_pixels %>% 
+  group_by(x, y) %>%
+  summarize(air_temperature = mean(air_temperature), 
+            biting_rate = mean(biting_rate), 
+            transmission_prob = mean(transmission_prob))
+
+saveRDS(all_pixels_integrate, here::here("risk_maps",
+                               "data", 
+                               "processed_data", 
+                               "all_pixels_integrate.RData"))
+
+#keep landcover data and toss pixels that change their landcover
+
+all_pixels_integrate <- all_pixels %>% 
+  group_by(x, y, landcover, loc = paste(x, y)) %>%
+  summarize(air_temperature = mean(air_temperature), 
+            biting_rate = mean(biting_rate), 
+            transmission_prob = mean(transmission_prob))
+
+duplicated_locs <- all_pixels_integrate$loc[duplicated(all_pixels_integrate$loc)]
+all_pixels_integrate <- filter(all_pixels_integrate, !(loc %in% duplicated_locs))
+
+saveRDS(all_pixels_integrate, here::here("risk_maps",
+                                         "data", 
+                                         "processed_data", 
+                                         "all_pixels_integrate_w_landcover.RData"))

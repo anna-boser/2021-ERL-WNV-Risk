@@ -67,7 +67,8 @@ t.test(filter(landcover_avg, landcover == "Agriculture")$transmission_prob,
        paired = TRUE)
 ```
 
-### Jensen's inequality test
+### Jensen's inequality test 
+####(check the role of time resolution over space averages)
 ```{r}
 All <-filter(landcover_avg, landcover == "All")
 
@@ -86,7 +87,20 @@ avg_transmit <- All$air_temperature %>% mean() %>% transmit
 
 t.test(x = All$biting_rate, mu = avg_bite)
 t.test(x = All$transmission_prob, mu = avg_transmit)
+```
 
+####(check the role of spatial resolution with time averages)
+```{r}
+all_pixels_integrate <- readRDS(here::here("risk_maps",
+                               "data", 
+                               "processed_data", 
+                               "all_pixels_integrate.RData"))
+
+avg_bite <- all_pixels_integrate$air_temperature %>% mean() %>% bite
+avg_transmit <- all_pixels_integrate$air_temperature %>% mean() %>% transmit
+
+t.test(x = all_pixels_integrate$biting_rate, mu = avg_bite)
+t.test(x = all_pixels_integrate$transmission_prob, mu = avg_transmit)
 ```
 
 
@@ -303,10 +317,46 @@ four_panel(transmit, limits = c(0,20))
 ### Figure 4 - Distribution of crop types during the daytime
 
 #### Integrated values over whole day for pixels close to each other
-Because each ECOSTRESS image has a slightly different grid, it is difficult to match the pixels to each other. We do this by matching the closest pixels from each image. 
+Because each ECOSTRESS image has a slightly different grid, it is difficult to match the pixels to each other. We do this by resampling all images to the first image.
 
 ```{r}
+pixels <- readRDS(here::here("risk_maps",
+                                         "data", 
+                                         "processed_data", 
+                                         "all_pixels_integrate_w_landcover.RData"))
 
+ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
+day_pixels$landcover <- factor(pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
+
+filter(pixels, landcover %in% ag_types) %>%
+  ggplot(aes(x = air_temperature, col= landcover, alpha = 0.2)) +
+  geom_density() +
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab(TeX("Air temperature ($^o$C)")) +
+      ylab("Density") +
+  xlim(25, 36.7) +
+  labs(title = "Average air temperature distribution") +
+  theme_bw()
+
+filter(pixels, landcover %in% ag_types) %>%
+  ggplot(aes(x = transmission_prob, col= landcover, alpha = 0.2)) +
+  geom_density() +
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab("Transmission probability (%)") +
+      ylab("Density") +
+  xlim(14.5, 20) +
+  labs(title = "Average transmission probability distribution") +
+  theme_bw()
+
+filter(pixels, landcover %in% ag_types) %>%
+  ggplot(aes(x = biting_rate, col= landcover, alpha = 0.2)) +
+  geom_density() +
+    guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
+      xlab(TeX("Biting rate ($day^{-1}$)")) +
+      ylab("Density") +
+  xlim(14.5, 20) +
+  labs(title = "Average biting rate distribution") +
+  theme_bw()
 
 # original submission: Instead of just looking at a single daytime frame's pixels, look at all measurements from 11 to 16h (15 frames)
 

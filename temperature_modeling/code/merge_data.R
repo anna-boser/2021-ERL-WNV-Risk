@@ -31,7 +31,7 @@ eco <- rbind(eco, read.csv(here::here("temperature_modeling",
                                       "raw_data", 
                                       "ECOSTRESS", 
                                       "noaa_points", 
-                                      "FIX")))
+                                      "SJ-NOAA-ECO-ECO2LSTE-001-results.csv")), fill = TRUE)
 
 # remove poor quality pixels
 eco <- dplyr::filter(eco, 
@@ -89,7 +89,7 @@ read_noaa <- function(year){
 
 noaa <- rbindlist(lapply(2018:2020, read_noaa))
 
-noaa$Stn.Id <- paste0("WBAN:", substring(noaa$STATION, 7)) # same ids as in ecostress data
+noaa$Stn.Id <- paste0("WBAN", substring(noaa$STATION, 7)) # same ids as in ecostress data
 
 #add date time to noaa
 noaa$mid_dt <- ymd_hms(noaa$DATE, 
@@ -111,11 +111,15 @@ noaa <- noaa[!is.na(Air.Temp..C.),] # remove NAs
 temperature <- rbind(cimis, noaa)
 
 #using the renamed file names, get the list of date times that are closest to the ecostress date times
-get_mid_dts <- function(dt){
+get_mid_dts <- function(row){
+  dt <-  ymd_hms(row[6], tz = "America/Los_Angeles")
+  ID <- row[2]
+  temperature <- filter(temperature, Stn.Id == ID)
   dt <- temperature$mid_dt[abs(temperature$mid_dt - dt) == min(abs(temperature$mid_dt - dt))][1]
   dt
 }
-eco$mid_dt <- lapply(eco$dt, get_mid_dts) %>% purrr::reduce(c) #the closest dts to the times the cimis sensors give us
+eco$mid_dt <- apply(eco, 1, get_mid_dts) %>% as.POSIXct(origin = '1970-01-01', tz = "America/Los_Angeles") #the closest dts to the times the temperature sensors give us
+
 eco$Stn.Id <- eco$ID
 eco$ID <- NULL
 
@@ -123,9 +127,10 @@ eco$ID <- NULL
 Comp_temp <- base::merge(x = eco, 
                          y = dplyr::select(temperature, Stn.Id, mid_dt, Air_Temp = Air.Temp..C.), 
                          by = c("Stn.Id", "mid_dt"), 
-                         all.x = TRUE, all.y = FALSE) #sometimes there is more than 1 cimis measurement which is what makes the dataset grow. 
+                         all.x = TRUE, all.y = FALSE)
 
 Comp_temp <- Comp_temp[!is.na(Air_Temp),]
+Comp_temp <- filter(Comp_temp, abs(dt-mid_dt) < 1800) #get rid of measurements whose air and LST are more than 30 min (1800 seconds) apart
 
 Comp_temp$Location <- Comp_temp$Category #This is just what AppEEARS called it when I got the data
 Comp_temp$Category <- NULL
@@ -135,16 +140,30 @@ Comp_temp$Category <- NULL
 ################################################################################
 
 #read in landsat data
-get_landsat <- function(year){
+get_landsat_cimis <- function(year){
   read.csv(here::here("temperature_modeling", 
                       "data", 
                       "raw_data", 
                       "Landsat", 
                       "cimis_points", 
-                      paste0("landsat-", year), paste0("Landsat-", year, "-CU-LC08-001-results.csv")))
+                      paste0("landsat-", year), 
+                      paste0("Landsat-", year, "-CU-LC08-001-results.csv")))
 }
-#FIX: ALSO NEED TO READ IN noaa points
-landsat <- rbindlist(lapply(2018:2020, get_landsat))
+landsat_cimis <- rbindlist(lapply(2018:2020, get_landsat_cimis))
+
+get_landsat_noaa <- function(year){
+  read.csv(here::here("temperature_modeling", 
+                      "data", 
+                      "raw_data", 
+                      "Landsat", 
+                      "noaa_points", 
+                      paste0("landsat-noaa-", year), 
+                      paste0("landsat-NOAA-", year, "-CU-LC08-001-results.csv")))
+}
+landsat_noaa <- rbindlist(lapply(2018:2019, get_landsat_noaa)) #important note: Appeears keeps failing at getting the 2020 data so I just gave up
+
+landsat <- rbind(landsat_noaa, landsat_cimis, fill = TRUE)
+
 landsat <-landsat[CU_LC08_001_PIXELQA != 1,]
 landsat$year <- year(ymd(landsat$Date))
 landsat <- landsat[,.(landsat_date = ymd(Date),
@@ -173,7 +192,7 @@ Comp_temp$landsat_date <- mapply(get_landsat_date, Comp_temp$Stn.Id, Comp_temp$d
 Comp_temp <- base::merge(x = Comp_temp, 
                          y = landsat, 
                          by = c("Stn.Id", "landsat_date"), 
-                         all.x = TRUE, all.y = FALSE) # sometimes there is more than 1 cimis measurement which is what makes the dataset grow. 
+                         all.x = TRUE, all.y = FALSE) 
 
 
 # save file

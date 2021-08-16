@@ -20,7 +20,7 @@ all_files <- list.files(here::here("risk_maps",
                                          "processed_data", 
                                          "ECOSTRESS", 
                                          "air_temperature"))
-all_files <- all_files[1:2] #for local testing
+# all_files <- all_files[1:2] #for local testing
 
 bite <- function(T){
   bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
@@ -40,6 +40,8 @@ resample_raster <- raster(here::here("risk_maps", #the raster to resample all ot
                             all_files[1]))
 
 pixelify <- function(file){
+  
+  print(file)
   
   date <- substr(file, 14, 23)
   hhmmss <- str_extract(file, regex('[0-9]{2}:{1}[0-9]{2}:{1}[0-9]{2}'))
@@ -72,7 +74,7 @@ pixelify <- function(file){
   
   landcovers_of_interest <- c("Urban", "Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
   
-  for (lc in landcovers_of_interest){ #for some reason there's only 2019?? should probably fix
+  for (lc in landcovers_of_interest){ 
     
     masked_raster <- raster::mask(airtemp_raster, 
                            filter(landcover_shp, landcover == lc))

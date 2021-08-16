@@ -96,10 +96,15 @@ noaa$mid_dt <- ymd_hms(noaa$DATE,
                         tz = "America/Los_Angeles")
 
 noaa <- noaa[!is.na(mid_dt),] # remove NAs
+noaa <- noaa[!is.na(HourlyDryBulbTemperature),] # remove NAs
 
-#average duplicate cimis values
-noaa <- noaa[, .(Air.Temp..C. = mean(as.numeric(HourlyDryBulbTemperature))), 
+#average duplicate values
+noaa <- noaa[, .(Air.Temp..F. = mean(as.numeric(HourlyDryBulbTemperature))), 
              by = .(Stn.Id, mid_dt)]
+
+# Farenheit to Celcius
+noaa$Air.Temp..C. <- (noaa$Air.Temp..F. - 32) * (5/9)
+noaa$Air.Temp..F. <- NULL
 
 noaa <- noaa[!is.na(Air.Temp..C.),] # remove NAs
 
@@ -211,24 +216,47 @@ write.csv(Comp_temp, here::here("temperature_modeling",
 # Fractional vegetation
 ################################################################################
 
-# Dan sent me the unmixed vegetation stuff so now I just need to add it to add it
-Comp_temp <- readRDS(here::here("temperature_modeling", 
-                                "data", 
-                                "processed_data", 
-                                "merged_df.RData"))
-Dan_unmix <- read.csv(here::here("temperature_modeling", 
-                        "data", 
-                        "raw_data", 
-                        "Landsat",
-                        "Landsat_unmixed.csv"))
-Comp_temp$V <- Dan_unmix$V2
+# Originally, Dan sent me the unmixed vegetation stuff so now I just need to add it to add it:
+# Comp_temp <- readRDS(here::here("temperature_modeling", 
+#                                 "data", 
+#                                 "processed_data", 
+#                                 "merged_df.RData"))
+# Dan_unmix <- read.csv(here::here("temperature_modeling", 
+#                         "data", 
+#                         "raw_data", 
+#                         "Landsat",
+#                         "Landsat_unmixed.csv"))
+# Comp_temp$V <- Dan_unmix$V2
+# 
+# #remove values less than 0:
+# Comp_temp <- filter(Comp_temp, V >= 0)
+#   
+# # save file
+# saveRDS(Comp_temp, here::here("temperature_modeling", 
+#                               "data", 
+#                               "processed_data", 
+#                               "merged_df.RData"))
+# 
+# However, after ERL Jun 9 2021 revisions, 
+# he sent me the entire dataset with four new columns:
+# substrate fraction, vegetation fraction, dark fraction, and RMSE.
+# Here I read this in, rename the vegetation column to V 
+# such that it is consistent with previous code.
 
-#remove values less than 0:
-Comp_temp <- filter(Comp_temp, V >= 0)
-  
+Dan_unmix <- read.csv(here::here("temperature_modeling",
+                        "data",
+                        "raw_data",
+                        "Landsat",
+                        "Landsat_unmixed.csv"))[,-1] # remove the first row which is just a repeat of the second
+Comp_temp$V <- Dan_unmix$veg_frac
+Comp_temp$rmse <- Dan_unmix$rmse
+
+#remove values less than 0 and rmse > 0.05
+Comp_temp <- filter(Comp_temp, V >= 0, rmse < 0.05)
+
 # save file
-saveRDS(Comp_temp, here::here("temperature_modeling", 
-                              "data", 
-                              "processed_data", 
+saveRDS(Comp_temp, here::here("temperature_modeling",
+                              "data",
+                              "processed_data",
                               "merged_df.RData"))
   

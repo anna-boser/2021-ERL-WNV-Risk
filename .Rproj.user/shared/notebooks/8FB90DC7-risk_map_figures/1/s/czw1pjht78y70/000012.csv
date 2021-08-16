@@ -1,7 +1,0 @@
-"0","bite <- function(T){"
-"0","  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)"
-"0","  bite <- ifelse(is.nan(bite), 0, bite)"
-"0","  return(bite)"
-"0","}"
-"0",""
-"0","so_i_have_it <- four_panel(bite, limits = c(0,.27))"

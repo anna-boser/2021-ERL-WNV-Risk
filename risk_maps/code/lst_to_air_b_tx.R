@@ -7,6 +7,8 @@ files <- list.files(here::here("risk_maps",
                                "ECOSTRESS",
                                "filtered_ims"))
 
+regression <- readRDS(file = here("risk_maps", "data", "raw_data", "regression.RDS"))
+
 temp_bite_tx <- function(file){
   print(file)
   T <- raster(here::here("risk_maps",
@@ -20,14 +22,18 @@ temp_bite_tx <- function(file){
   ones[] <- 1 #make a raster of ones
   
   # correct temperature
-  T <- 3.7001008*ones + 1.0591731*T - 0.0086070*(T^2)
+  T <- regression[["coefficients"]][[1]]*ones + 
+    regression[["coefficients"]][[2]]*T + 
+    regression[["coefficients"]][[3]]*(T^2) + 
+    regression[["coefficients"]][[4]]*(T^3)
   
   writeRaster(T, here::here("risk_maps",
                                  "data", 
                                  "processed_data",
                                  "ECOSTRESS",
                                  "air_temperature", 
-                                 file))
+                                 file), 
+              overwrite=TRUE)
   
   # biting rates
   
@@ -43,7 +49,8 @@ temp_bite_tx <- function(file){
                             "processed_data",
                             "ECOSTRESS",
                             "biting_rates", 
-                            file))
+                            file), 
+              overwrite=TRUE)
   
   #transmission rates
   
@@ -59,7 +66,8 @@ temp_bite_tx <- function(file){
                             "processed_data",
                             "ECOSTRESS",
                             "transmission_rates", 
-                            file))
+                            file), 
+              overwrite=TRUE)
 }
 
 lapply(files, temp_bite_tx)

@@ -79,7 +79,9 @@ ggplot(Comp_temp, aes(x = lm3$fitted.values, y = lm3V$fitted.values)) + geom_poi
   scale_colour_gradient(low = "tan", high = "green3", limits = c(0, 1)) + 
   xlab("Without vegetation") + 
   ylab("With vegetation") + 
-  labs(color = "Fractional Vegetation")
+  labs(color = "Fractional Vegetation") + 
+  ggtitle("Comparative modeled air temperature from a cubic land surface temperature model") + 
+  theme(legend.position = c(0.8, 0.3))
 ```
 
 
@@ -94,7 +96,7 @@ ggplot(Comp_temp, aes(x =  V, y =Air_Temp)) +
     geom_point(aes(color = ECOSTRESS)) +
   # stat_function(fun = function(x){6.906e-01 + 1.432e+00*x -2.213e-02*x^2 + 1.473e-04*x^3}, show.legend = TRUE) + 
   geom_smooth(method = "lm") + 
-  # labs(title = "Fractional vegetation vs. air temperature") + 
+  labs(title = "Fractional vegetation by air temperature") + 
   ylab(TeX("Air Temperature ($^o$C)")) + 
   xlab("Fractional Vegetation") + 
   ylim(min = 0, max = 45) + 
@@ -115,17 +117,18 @@ final <- lm3
 ```{r lst_scatter, echo=FALSE, warning=FALSE}
 ggplot(Comp_temp, aes(x = ECOSTRESS, y =Air_Temp)) + 
   geom_point(aes(alpha = .2), size = .8) +
-  stat_function(fun = function(x){summary(lm3)$coefficients[1,1] + summary(lm3)$coefficients[2,1]*x + summary(lm3)$coefficients[3,1]*x^2 + summary(lm3)$coefficients[4,1]*x^3 }, aes(colour = "Quadratic regression"), size = 1, show.legend = TRUE) + 
+  stat_function(fun = function(x){summary(lm3)$coefficients[1,1] + summary(lm3)$coefficients[2,1]*x + summary(lm3)$coefficients[3,1]*x^2 + summary(lm3)$coefficients[4,1]*x^3 }, aes(colour = "Cubic regression"), size = 1, show.legend = TRUE) + 
   stat_function(fun = function(x){x}, aes(colour = "One to one"), show.legend = TRUE) + 
   # labs(title = "ECOSTRESS LST vs. CIMIS air temperature") + 
   ylab(TeX("Air Temperature ($^o$C)")) + 
   xlab(TeX("Land Surface Temperature ($^o$C)")) + 
   ylim(min = 5, max = 45) + 
   xlim(min = 5, max = 60) + 
-  guides(alpha = FALSE, colour= FALSE) +
+  guides(alpha = FALSE) +
   theme(legend.title = element_blank()) + 
-  scale_color_manual(values = c("gray64", "red")) + 
-  theme_bw()
+  scale_color_manual(values = c("red", "gray64")) + 
+  theme_bw() + 
+  theme(legend.position = c(0.8, 0.2), legend.title = element_blank()) # + facet_wrap(vars(!is.na(Location)))
 ```
 
 
@@ -156,5 +159,21 @@ Even though our Adjusted $R^2$ is `summary(final)$adj.r.squared`, the residual s
 
 ```{r, include = FALSE}
 saveRDS(final, file = here("risk_maps", "data", "raw_data", "regression.RDS"))
+```
+
+### For reviewer 2:
+```{r}
+ggplot(Comp_temp, aes(x = ECOSTRESS, y =Air_Temp)) + 
+  geom_point(aes(alpha = .2, color = ifelse(!is.na(Location), "CIMIS", "NOAA")), size = .8) +
+  # labs(title = "ECOSTRESS LST vs. CIMIS air temperature") + 
+  ylab(TeX("Air Temperature ($^o$C)")) + 
+  xlab(TeX("Land Surface Temperature ($^o$C)")) + 
+  ylim(min = 5, max = 45) + 
+  xlim(min = 5, max = 60) + 
+  guides(alpha = FALSE) +
+  theme(legend.title = element_blank()) + 
+  scale_color_manual(values = c("red", "blue")) + 
+  theme_bw() + 
+  theme(legend.position = c(0.8, 0.2), legend.title = element_blank())
 ```
 

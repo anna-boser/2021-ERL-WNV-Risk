@@ -21,11 +21,7 @@ It is organized as a R project in two parts: LST to air temperature modeling **t
 
 These data are then processed and matched together in the **merge_data.R** file that can be found in the **code** folder to create **merged_df.RData** that can be found in the **processed_data** folder. 
 
-Under **results** an R markdown file named **temp_mod_figures.Rmd** (temperature modeling figures) and corresponding html file can be found that describes the modeling approach and houses the following figures: 
-- model selection details
-- fig S1 - LST vs air temp scatterplots - raw data, and Corrected relationship w/ 1:1 scatter
-- fig S2 - breakdown vs vegetation 
-- fig S3 - Plot of air temperature estimates from cubic land surface temperature regressions with and without a vegetation fraction term
+Under **results** an R markdown file named **temp_mod_figures.Rmd** (temperature modeling figures) and corresponding html file can be found that describes the modeling approach and houses several figures
 
 ## Risk Maps
 
@@ -49,14 +45,12 @@ Under **results** an R markdown file named **temp_mod_figures.Rmd** (temperature
 In the **processed_data** folder you can find the following: 
 - **ECOSTRESS** which holds the corrected **air_temperatures** and corresponding **biting_rate** and **transmission_rate** maps, created in **lst_to_air_b_tx.R**
 - **landcover_avgs.RData**: a file with the average risk profiles (tx and bite) over the different land cover types of interest, built in **landcover_avg.R**. 
-- **all_pixels.RData**: every pixel within an image land cover types and vegetation, built in **all_pixels.R**. 
-- **day_pixels.RData**: every pixel within a daytime image, built in **day_pixels.R**. 
+
+- **all_pixels_location_match.RData**: a file with every temperature observation and risk profiles (tx and bite) resampled to grid of first image for spatial consistency, built in **all_pixels_integrate.R**. 
+- **all_pixels_integrate.RData**: a file with the average risk profiles (tx and bite) over each pixel (resampled to grid of first image for spatial consistency), calculated from **all_pixels_location_match.RData** in **all_pixels_integrate.R**. 
+- **all_pixels_integrate_with_landcover.RData**: a file with the average risk profiles (tx and bite) over each pixel  (resampled to grid of first image for spatial consistency), labeled by landcover of the pixel, calculated from **all_pixels_location_match.RData** in **all_pixels_integrate.R**. Pixels that change lancover from 2018-2020 are excluded. 
+*- **all_pixels.RData**: every pixel within an image land cover types and vegetation, built in **all_pixels.R**.* check if still used
+*- **day_pixels.RData**: every pixel within a daytime image, built in **day_pixels.R**.* check if still used
 - **Landcover** which holds a shapefile with flattened geometries for the different landcover types of interest, created in **flatten_landcovers.R**
 
-Under **results** an R markdown file named **risk_map_figures.Rmd** and corresponding html file can be found that describes the modeling approach and houses the following: 
-- fig 2 - Mordecai equation plot
-- fig 3 - Maps for each time of day
-- fig S3 - mapped errors at different times of day
-- fig 4 - Distribution of crop types during the daytime
-- fig 5 - urban and ag diurnal time series
-- various statistical tests referenced in the manuscript
+Under **results** an R markdown file named **risk_map_figures.Rmd** and corresponding html file can be found that describes the modeling approach and houses the remaining figures.

@@ -18,6 +18,17 @@ library(zoo)
 library(latex2exp)
 ```
 
+```{r}
+bite <- function(T){
+  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+  bite <- ifelse(is.nan(bite), 0, bite)
+  return(bite)
+}
+
+transmit <- function(T){
+  -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
+}
+```
 
 ### Figure 2 - Mordecai equation plot
 ```{r moredecai, echo=FALSE, warning=FALSE}
@@ -43,11 +54,17 @@ ggplot(mordecai, aes(x = temperature)) +
         ) + 
   # labs(title = "Culex tarsalis biting and West Nile virus transmission rates", 
   #      subtitle = "From Mordecai et. al., 2019") + 
-  xlab(TeX("Temperature ($^o$C)")) + 
+  xlab(TeX("Air temperature ($^o$C)")) + 
   scale_color_manual(values = c("red", "blue")) + 
   guides(size = FALSE) + 
   theme_bw() +
-  theme(legend.position = c(0.2, 0.8), legend.title = element_blank()) 
+  theme(legend.position = c(0.2, 0.8), legend.title = element_blank()) +
+  geom_linerange(aes(x = 19.2, ymin = 0, ymax = 10), color = "grey")+
+  geom_linerange(aes(x = 38.8, ymin = 0, ymax = 10), color = "grey")+
+  geom_linerange(aes(x = 29, ymin = 0, ymax = 19.5), color = "black", linetype = "dashed")+
+  geom_point(aes(x = 19.2, y = 10), color = "grey", size = 3) +
+  geom_point(aes(x = 38.8, y = 10), color = "grey", size = 3) +
+  geom_point(aes(x = 29, y = 19.5), color = "black", size = 3)
 ```
 
 ```{r}
@@ -76,116 +93,125 @@ t.test(filter(landcover_avg, landcover == "Agriculture")$transmission_prob,
        paired = TRUE)
 ```
 
-### Jensen's inequality test 
-####(check the role of time resolution over space averages)
-```{r}
-All <-filter(landcover_avg, landcover == "All")
 
-bite <- function(T){
-  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
-  bite[is.nan(bite)] <- 0
-  return(bite)
-}
 
-transmit <- function(T){
-  -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
-}
-
-avg_bite <- All$air_temperature %>% mean() %>% bite
-avg_transmit <- All$air_temperature %>% mean() %>% transmit
-
-t.test(x = All$biting_rate, mu = avg_bite)
-t.test(x = All$transmission_prob, mu = avg_transmit)
-```
-
-####(check the role of spatial resolution with time averages)
+### Figure 3- integrated (no temporal variability)
 ```{r}
 all_pixels_integrate <- readRDS(here::here("risk_maps",
-                               "data", 
-                               "processed_data", 
-                               "all_pixels_integrate.RData"))
+                                         "data", 
+                                         "processed_data", 
+                                         "all_pixels_integrate.RData"))
 
-avg_bite <- all_pixels_integrate$air_temperature %>% mean(na.rm = TRUE) %>% bite #there are 3751 pixels on the edge that do not have values for every image, and these we remove. 
-avg_transmit <- all_pixels_integrate$air_temperature %>% mean(na.rm = TRUE) %>% transmit
+coordinates(all_pixels_integrate) <- ~ x + y
+gridded(all_pixels_integrate) <- TRUE
+air_temp_raster <- raster(all_pixels_integrate, "air_temperature")
+biting_raster <- raster(all_pixels_integrate, "biting_rate")
+transmission_raster <- raster(all_pixels_integrate, "transmission_prob")
 
-t.test(x = all_pixels_integrate$biting_rate, mu = avg_bite)
-t.test(x = all_pixels_integrate$transmission_prob, mu = avg_transmit)
+pal <- colorRampPalette(c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red"))
+
+plot(air_temp_raster,
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Air temperature ($^o$C)"))
+
+plot(biting_raster,
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Biting rate ($day^{-1}$)"))
+
+plot(transmission_raster,
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Transmission probability (%)"))
 ```
 
 
 ### Figure 3 - maps for each time of day
 ```{r four_maps, echo=FALSE, warning=FALSE}
 chosen_four <- list.files(here::here("risk_maps",
-                                     "data", 
-                                     "raw_data", 
-                                     "ECOSTRESS", 
+                                     "data",
+                                     "raw_data",
+                                     "ECOSTRESS",
                                      "chosen_four"))
 
 four_panel <- function(type, limits){
   date <- ymd(substr(chosen_four, 14, 23))
   hhmmss <- str_extract(chosen_four, regex('[0-9]{2}:{1}[0-9]{2}:{1}[0-9]{2}'))
   dt <- ymd_hms(paste(date, hhmmss), tz = "America/Los_Angeles")
-  
+
   night <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     type, 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     type,
                                      chosen_four[1]))
   dawn <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     type, 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     type,
                                      chosen_four[2]))
   day <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     type, 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     type,
                                      chosen_four[3]))
   dusk <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     type, 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     type,
                                      chosen_four[4]))
-  
+
   pal <- colorRampPalette(c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red"))
-  
-  plot(dawn, 
-       col = pal(50), 
+
+  plot(dawn,
+       col = pal(50),
        # xlim=c(0,55),
        # ylim=c(-10,50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Dawn (", dt[2],")"))
-  
-  plot(day, 
-       col = pal(50), 
+
+  plot(day,
+       col = pal(50),
        # xlim=c(0,55),
        # ylim=c(-10,50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Day (", dt[3],")"))
-  
-  plot(dusk, 
-       col = pal(50), 
+
+  plot(dusk,
+       col = pal(50),
        # xlim=c(0,55),
        # ylim=c(-10,50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Dusk (", dt[4],")"))
-  
-  plot(night, 
-       col = pal(50), 
+
+  plot(night,
+       col = pal(50),
        # xlim=c(0,55),
        # ylim=c(-10,50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Night (", dt[1],")"))
 }
@@ -196,22 +222,66 @@ four_panel <- function(type, limits){
 four_panel("air_temperature", limits = c(11,41))
 ```
 
-#### Biting rates
-```{r b_maps, echo = FALSE}
-four_panel("biting_rates", limits = c(0,.27))
+<!-- #### Biting rates -->
+<!-- ```{r b_maps, echo = FALSE} -->
+<!-- four_panel("biting_rates", limits = c(0,.27)) -->
+<!-- ``` -->
+
+<!-- #### transmission rates -->
+<!-- ```{r tx_maps, echo = FALSE} -->
+<!-- four_panel("transmission_rates", limits = c(0,20)) -->
+<!-- ``` -->
+
+Maps of errors integrated
+```{r}
+get_error <- function(temp_raster, risk_function){
+
+  max_error_by_pixel <- function(temperature){
+    if (is.na(temperature)){
+      return(NA)
+    } else {
+      lower_bound <- temperature - (STANDARD_ERROR/(65-1))*1.96
+      upper_bound <- temperature + (STANDARD_ERROR/(65-1))*1.96
+  
+      max <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=TRUE)$objective
+      min <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=FALSE)$objective
+  
+      return(max - min)
+    }
+  }
+
+  values <- raster::values(temp_raster)
+  errors <- sapply(values, max_error_by_pixel)
+  values(temp_raster) <- errors
+  return(temp_raster)
+}
+
+plot(get_error(air_temp_raster, bite),
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Biting rate uncertainty ($day^{-1}$)"))
+
+plot(get_error(air_temp_raster, transmit),
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Transmission probability uncertainty (%)"))
 ```
 
-#### transmission rates
-```{r tx_maps, echo = FALSE}
-four_panel("transmission_rates", limits = c(0,20))
-```
 
 ### Figure S3 - maps of errors
 ```{r erroes, echo = FALSE}
 chosen_four <- list.files(here::here("risk_maps",
-                                     "data", 
-                                     "raw_data", 
-                                     "ECOSTRESS", 
+                                     "data",
+                                     "raw_data",
+                                     "ECOSTRESS",
                                      "chosen_four"))
 
 regression <- readRDS(file = here("risk_maps", "data", "raw_data", "regression.RDS"))
@@ -222,32 +292,32 @@ four_panel <- function(risk_function, limits){
   date <- ymd(substr(chosen_four, 14, 23))
   hhmmss <- str_extract(chosen_four, regex('[0-9]{2}:{1}[0-9]{2}:{1}[0-9]{2}'))
   dt <- ymd_hms(paste(date, hhmmss), tz = "America/Los_Angeles")
-  
+
   night <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     "air_temperature", 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     "air_temperature",
                                      chosen_four[1]))
   dawn <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     "air_temperature", 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     "air_temperature",
                                      chosen_four[2]))
   day <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     "air_temperature", 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     "air_temperature",
                                      chosen_four[3]))
   dusk <- raster(here::here("risk_maps",
-                                     "data", 
-                                     "processed_data", 
-                                     "ECOSTRESS", 
-                                     "air_temperature", 
+                                     "data",
+                                     "processed_data",
+                                     "ECOSTRESS",
+                                     "air_temperature",
                                      chosen_four[4]))
-  
+
   get_error <- function(temp_raster){
 
     max_error_by_pixel <- function(temperature){
@@ -266,39 +336,39 @@ four_panel <- function(risk_function, limits){
     values(temp_raster) <- errors
     return(temp_raster)
   }
-  
+
   dawn <- get_error(dawn)
   day <- get_error(day)
   dusk <- get_error(dusk)
   night <- get_error(night)
-  
+
   pal <- colorRampPalette(c("darkblue", "blue", "steelblue1", "white", "yellow", "orange", "red"))
-  
-  plot(dawn, 
-       col = pal(50), 
+
+  plot(dawn,
+       col = pal(50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Dawn (", dt[2],")"))
-  
-  plot(day, 
-       col = pal(50), 
+
+  plot(day,
+       col = pal(50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Day (", dt[3],")"))
-  
-  plot(dusk, 
-       col = pal(50), 
+
+  plot(dusk,
+       col = pal(50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Dusk (", dt[4],")"))
-  
-  plot(night, 
-       col = pal(50), 
+
+  plot(night,
+       col = pal(50),
        zlim=limits,
-       xlab="Longitude", 
+       xlab="Longitude",
        ylab = "Latitude")
   title(paste0("Night (", dt[1],")"))
 }
@@ -316,7 +386,7 @@ so_i_have_it <- four_panel(bite, limits = c(0,.27))
 so_i_have_it
 ```
 
-#### transmission rates errors -- CODE WRONG. NEEDS CHECK. 
+#### transmission rates errors -- CODE WRONG. NEEDS CHECK.
 ```{r tx_maps_e, echo = FALSE}
 transmit <- function(T){
   -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
@@ -337,7 +407,7 @@ pixels <- readRDS(here::here("risk_maps",
                                          "all_pixels_integrate_w_landcover.RData")) %>% 
   filter(!is.na(air_temperature))
 
-ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated")
+ag_types <- c("Vegetable", "Orchard", "Fruit", "Field Crop", "Uncultivated", "Urban")
 pixels$landcover <- factor(pixels$landcover, levels = c("Urban",  "Uncultivated", "Vegetable", "Fruit", "Orchard", "Field Crop", "Other"))
 
 filter(pixels, landcover %in% ag_types) %>%
@@ -346,10 +416,10 @@ filter(pixels, landcover %in% ag_types) %>%
     guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
       xlab(TeX("Air temperature ($^o$C)")) +
       ylab("Density") +
-  xlim(22.5, 28.5) +
+  xlim(22.5, 29.2) +
   # labs(title = "Average air temperature distribution") +
   theme_bw() +
-  theme(legend.position = c(0.2, 0.8), legend.title = element_blank()) 
+  theme(legend.position = c(0.15, 0.7), legend.title = element_blank()) 
 
 filter(pixels, landcover %in% ag_types) %>%
   ggplot(aes(x = transmission_prob, col= landcover, alpha = 0.2)) +
@@ -357,7 +427,7 @@ filter(pixels, landcover %in% ag_types) %>%
     guides(alpha = FALSE, col = guide_legend(title = "Crop category")) +
       xlab("Transmission probability (%)") +
       ylab("Density") +
-  xlim(13, 16.5) +
+  xlim(13, 17.3) +
   # labs(title = "Average transmission probability distribution") +
   theme_bw() + 
   guides(color = FALSE)
@@ -403,6 +473,7 @@ filter(pixels, landcover %in% ag_types) %>%
 #   labs(title = "Daytime transmission probability distribution") + 
 #   theme_bw()
 ```
+
 ### f-test on different crop types
 ```{r}
 f_air_temp <- aov(air_temperature ~ landcover, data = filter(pixels, landcover %in% ag_types))
@@ -419,6 +490,16 @@ summary(f_trans_prob)
 overview <- filter(landcover_avg, landcover %in% c("Urban", "Agriculture"))
 overview$landcover <- factor(overview$landcover, levels = c("Urban", "Agriculture"))
 
+air_df <- data.frame(type = levels(overview$landcover),
+                       Means = tapply(X = overview$air_temperature, INDEX = overview$landcover,
+                                        FUN = mean))
+bite_df <- data.frame(type = levels(overview$landcover),
+                       Means = tapply(X = overview$biting_rate, INDEX = overview$landcover,
+                                        FUN = mean))
+transmit_df <- data.frame(type = levels(overview$landcover),
+                       Means = tapply(X = overview$transmission_prob, INDEX = overview$landcover,
+                                        FUN = mean))
+
 #overview plots
 ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = landcover, shape = landcover)) + 
       geom_point(size = 2) + #aes(alpha = .2)
@@ -429,10 +510,13 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = air_temperature, col = la
       # geom_line(aes(y=rollmedian(air_temperature, 7, na.pad=TRUE))) + 
       xlab("Hour of day") +
       ylab(TeX("Air temperature ($^o$C)")) + 
-      labs(title = "Diurnal fluctuations in air temperature") + 
+      # labs(title = "Diurnal fluctuations in air temperature") +
       scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
       guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
-  theme_bw()
+  theme_bw() +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Urban")$air_temperature)), color = "#E66100", linetype = "dashed") +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Agriculture")$air_temperature)), color = "#5D3A9B", linetype = "dashed") + 
+  theme(legend.position = c(0.2, 0.8))
 
 ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landcover, shape = landcover)) + 
       geom_point(size = 2) + 
@@ -445,10 +529,13 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = biting_rate, col = landco
       xlab("Hour of day") +
       ylim(0,.26) + 
       ylab(TeX("Biting rate ($day^{-1}$)")) + 
-      labs(title = "Diurnal fluctuations in biting rates") + 
+      # labs(title = "Diurnal fluctuations in biting rates") + 
       scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
-      guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
-  theme_bw()
+      # guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
+  guides(alpha = FALSE, col = FALSE, shape = FALSE) + 
+  theme_bw() +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Urban")$biting_rate)), color = "#E66100", linetype = "dashed") +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Agriculture")$biting_rate)), color = "#5D3A9B", linetype = "dashed")
 
 ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = landcover, shape = landcover)) + 
       geom_point(size = 2) + 
@@ -460,9 +547,194 @@ ggplot(overview, aes(x = hour(dt) + minute(dt)/60, y = transmission_prob, col = 
       xlab("Hour of day") +
       ylim(0,20) + 
       ylab("Transmission Probability (%)") + 
-      labs(title = "Diurnal fluctuations in transmission probabilities") + 
+      # labs(title = "Diurnal fluctuations in transmission probabilities") + 
       scale_color_manual(values = c(Urban = "#E66100", All = "#E69F00", Agriculture = "#5D3A9B")) + 
-      guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
-  theme_bw()
+      # guides(alpha = FALSE, col = guide_legend(title="Landcover type"), shape = guide_legend(title="Landcover type")) + 
+  guides(alpha = FALSE, col = FALSE, shape = FALSE) + 
+  theme_bw() +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Urban")$transmission_prob)), color = "#E66100", linetype = "dashed") +
+  geom_hline(aes(yintercept = mean(filter(overview, landcover == "Agriculture")$transmission_prob)), color = "#5D3A9B", linetype = "dashed")
 
+```
+
+### Jensen's inequality test 
+####(space averages)
+```{r}
+All <-filter(landcover_avg, landcover == "All")
+
+bite <- function(T){
+  bite <- (1.67*10^-4) * T * (T- 2.3) * (32.0 - T)^(1/2)
+  bite[is.nan(bite)] <- 0
+  return(bite)
+}
+
+transmit <- function(T){
+  -(2.94*10^-3) * T * (T - 11.3) * (T - 41.9)
+}
+
+All$avg_bite <- All$air_temperature %>% bite
+All$avg_transmit <- All$air_temperature %>% transmit
+
+t.test(x = All$biting_rate, y = All$avg_bite, paired = TRUE)
+t.test(x = All$transmission_prob, y = All$avg_transmit, paired = TRUE)
+```
+
+
+####(time averages)
+```{r}
+all_pixels_integrate <- readRDS(here::here("risk_maps",
+                               "data", 
+                               "processed_data", 
+                               "all_pixels_integrate.RData")) %>% filter(!is.na(air_temperature)) #there are 3751 pixels on the edge that do not have values for every image, and these we remove. 
+
+all_pixels_integrate$avg_bite <- all_pixels_integrate$air_temperature %>% bite 
+all_pixels_integrate$avg_transmit <- all_pixels_integrate$air_temperature %>% transmit
+
+t.test(x = all_pixels_integrate$biting_rate, y = all_pixels_integrate$avg_bite, paired = TRUE)
+t.test(x = all_pixels_integrate$transmission_prob, y = all_pixels_integrate$avg_transmit, paired = TRUE)
+```
+
+#### role of both spatial and temporal resolution
+```{r}
+all_pixels_integrate <- readRDS(here::here("risk_maps",
+                               "data", 
+                               "processed_data", 
+                               "all_pixels_integrate.RData")) %>% filter(!is.na(air_temperature)) #there are 3751 pixels on the edge that do not have values for every image, and these we remove. 
+
+avg_bite <- all_pixels_integrate$air_temperature %>% mean(na.rm = TRUE) %>% bite 
+avg_transmit <- all_pixels_integrate$air_temperature %>% mean(na.rm = TRUE) %>% transmit
+
+t.test(x = all_pixels_integrate$biting_rate, mu = avg_bite)
+t.test(x = all_pixels_integrate$transmission_prob, mu = avg_transmit)
+```
+
+```{r}
+bitemax <- optimize(bite, interval=c(0, 40), maximum=TRUE)$objective
+transmax <- optimize(transmit, interval=c(0, 40), maximum=TRUE)$objective
+```
+
+
+#### Plot Jensen's inequality for spatial stuff through time: not included
+```{r}
+ggplot(All) + geom_point(aes(x = avg_bite - biting_rate, y = hour(dt) + minute(dt)/60, color = avg_bite))
+ggplot(All) + geom_point(aes(x = avg_transmit - transmission_prob, y = hour(dt) + minute(dt)/60, color = avg_transmit))
+```
+
+
+<!-- ```{r} -->
+<!-- # spatial variability -->
+<!-- Risks = c("air_temperature", "biting_rate", "transmission_prob") -->
+<!-- new_names = c("Air temperature (C)", "Biting rate (1/day)", "Transmission probability (%)") -->
+<!-- names(new_names) = Risks -->
+
+<!-- All_longer <- All %>% -->
+<!--   pivot_longer(cols = c("air_temperature", "biting_rate", "transmission_prob"), names_to = "type", values_to = "value") -->
+
+<!-- All_longer$type <- as.factor(All_longer$type) -->
+
+<!-- means_df <- data.frame(type = levels(All_longer$type), -->
+<!--                        Means = tapply(X = All_longer$value, INDEX = All_longer$type, -->
+<!--                                         FUN = mean)) -->
+
+<!-- air_df <- means_df -->
+<!-- air_df["biting_rate", "Means"] <- bite(air_df["air_temperature", "Means"]) -->
+<!-- air_df["transmission_prob", "Means"] <- transmit(air_df["air_temperature", "Means"]) -->
+
+<!-- All_longer %>% -->
+<!--   ggplot() + -->
+<!--   geom_histogram(aes(x = value), bins = 10, fill = "indianred1", alpha = .5) + -->
+<!--   facet_wrap(vars(type), nrow = 3, scales = "free_x", labeller = labeller(type = new_names)) + -->
+<!--   geom_vline(data = means_df, aes(xintercept = Means, colour = "Mean risk")) + -->
+<!--   geom_vline(data = air_df, aes(xintercept = Means, colour = "Mean temperature risk"), linetype = "dashed") + -->
+<!--   scale_color_manual(values = c("indianred1", "black")) + -->
+<!--   theme_bw() + -->
+<!--   ylab("Image count") + -->
+<!--   xlab("Average image risk") + -->
+<!--   theme(legend.position = c(.2, .16), legend.title = element_blank()) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # spatial varaibility -->
+<!-- Risks = c("air_temperature", "biting_rate", "transmission_prob") -->
+<!-- new_names = c("Air temperature (C)", "Biting rate (1/day)", "Transmission probability (%)") -->
+<!-- names(new_names) = Risks -->
+
+<!-- all_pixels_integrate_longer <- all_pixels_integrate %>% -->
+<!--   pivot_longer(cols = c("air_temperature", "biting_rate", "transmission_prob"), names_to = "type", values_to = "value") -->
+
+<!-- all_pixels_integrate_longer$type <- as.factor(all_pixels_integrate_longer$type) -->
+
+<!-- means_df <- data.frame(type = levels(all_pixels_integrate_longer$type), -->
+<!--                        Means = tapply(X = all_pixels_integrate_longer$value, INDEX = all_pixels_integrate_longer$type, -->
+<!--                                         FUN = mean)) -->
+
+<!-- air_df <- means_df -->
+<!-- air_df["biting_rate", "Means"] <- bite(air_df["air_temperature", "Means"]) -->
+<!-- air_df["transmission_prob", "Means"] <- transmit(air_df["air_temperature", "Means"]) -->
+
+<!-- all_pixels_integrate_longer %>% -->
+<!--   ggplot() + -->
+<!--   geom_histogram(aes(x = value), bins = 10, fill = "steelblue1", alpha = .5) + -->
+<!--   facet_wrap(vars(type), nrow = 3, scales = "free_x", labeller = labeller(type = new_names)) + -->
+<!--   geom_vline(data = means_df, aes(xintercept = Means), colour = "steelblue1") + -->
+<!--   geom_vline(data = air_df, aes(xintercept = Means), colour = "black", linetype = "dashed") + -->
+<!--   # scale_color_manual(values = c("blue", "white")) + -->
+<!--   theme_bw() + -->
+<!--   ylab("Pixel count") + -->
+<!--   xlab("Average pixel risk") -->
+<!--   # theme(legend.position = c(.17, .14), legend.title = element_blank()) -->
+<!-- ``` -->
+
+### Figure Sx: Distribution of ECOSTRESS images included in the study by month and hour of day.
+```{r}
+lstfiles <- list.files(path = here::here("risk_maps", 
+                                         "data", 
+                                         "raw_data", 
+                                         "ECOSTRESS",
+                                         "all_ims",
+                                         "LST"), pattern = "tif", recursive = TRUE, full.names = FALSE)
+
+getdate <- function(file){
+  
+  nums <- str_extract(file, regex('(?<=doy)[0-9]+'))
+  year <- substr(nums, 1, 4)
+  doy <- substr(nums, 5, 7) %>% as.numeric()
+  hhmmss <- substr(nums, 8, 13)
+  date <- as.Date(doy - 1, origin = paste0(year, "-01-01"))
+  dt <- ymd_hms(paste(date, hhmmss), tz = "UTC") %>% with_tz("America/Los_Angeles")
+  
+  return(dt)
+}
+
+all_dates <- do.call(c, lapply(lstfiles, getdate))
+
+files <- list.files(path = here::here("risk_maps", 
+                                      "data",
+                                      "raw_data",
+                                      "ECOSTRESS",
+                                      "filtered_ims"), 
+                    pattern = "tif", 
+                    recursive = TRUE, 
+                    full.names = FALSE)
+
+getfiltdate <- function(file){
+  
+  date <- ymd(substr(file, 14, 23))
+  hhmmss <- str_extract(file, regex('[0-9]{2}:{1}[0-9]{2}:{1}[0-9]{2}'))
+  dt <- ymd_hms(paste(date, hhmmss), tz = "America/Los_Angeles")
+  
+  return(dt)
+}
+
+filtered_dates <- do.call(c, lapply(files, getfiltdate))
+
+data.frame(dt = all_dates, included = ifelse(all_dates %in% filtered_dates, "Included", "Not included")) %>%
+  ggplot() +
+  geom_point(aes(x = month(dt) + day(dt)/30 + hour(dt)/(24*30), y = hour(dt) + minute(dt)/60, shape = as.factor(year(dt)), color = included)) +
+  scale_color_manual(values = c("red", "lightblue2")) + 
+  xlab("Month") + 
+  ylab("Hour")  +
+  theme_bw() +
+  theme(legend.title = element_blank())
+  
 ```

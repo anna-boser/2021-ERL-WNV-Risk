@@ -1,4 +1,4 @@
-# WNV-paper
+# Micro-climate to macro-risk: Mapping  fine scale differences in mosquito-borne disease risk using remote sensing 
 This is the repository used to create West Nile virus risk maps with ECOSTRESS LST measurements. 
 
 It is organized as a R project in two parts: LST to air temperature modeling **temperature_modeling** (data, code, and results/figures), and WNV risk map creation and analysis **risk_maps** (data, code, and results/figures). 
@@ -21,7 +21,11 @@ It is organized as a R project in two parts: LST to air temperature modeling **t
 
 These data are then processed and matched together in the **merge_data.R** file that can be found in the **code** folder to create **merged_df.RData** that can be found in the **processed_data** folder. 
 
-Under **results** an R markdown file named **temp_mod_figures.Rmd** (temperature modeling figures) and corresponding html file can be found that describes the modeling approach and houses several figures
+Under **results** an R markdown file named **temp_mod_figures.Rmd** (temperature modeling figures) and corresponding html file can be found that describes the modeling approach and houses several figures: 
+- Figure S1: Distribution of ECOSTRESS images included in the study by month and hour of image acquisition.
+- Figure S2: LST and air temperature scatterplot and model.
+- Table S1: AIC, adjusted R2, and Breusch-Pagan statistics for models predicting air temperature.
+- Figure S3. Effect of fractional vegetation on air temperature prediction using land surface temperature (LST).
 
 ## Risk Maps
 
@@ -53,4 +57,10 @@ In the **processed_data** folder you can find the following:
 *- **day_pixels.RData**: every pixel within a daytime image, built in **day_pixels.R**.* check if still used
 - **Landcover** which holds a shapefile with flattened geometries for the different landcover types of interest, created in **flatten_landcovers.R**
 
-Under **results** an R markdown file named **risk_map_figures.Rmd** and corresponding html file can be found that describes the modeling approach and houses the remaining figures.
+Under **results** an R markdown file named **risk_map_figures.Rmd** and corresponding html file can be found that describes the modeling approach and houses the remaining figures: 
+- Figure 2. Culex tarsalis biting and West Nile virus transmission rates.
+- Figure 3. Air temperature and West Nile virus temperature suitability maps
+- Figure 4. Diurnal cycles of air temperature, and resulting biting and transmission rates.
+- Figure 5. Air temperature and WNV transmission probability distributions by land cover type.
+- Table 1: Using aggregate data results in statistically significant biases when calculating risk.
+- various statistical tests referenced in the manuscript

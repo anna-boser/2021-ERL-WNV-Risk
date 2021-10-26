@@ -232,49 +232,6 @@ four_panel("air_temperature", limits = c(11,41))
 <!-- four_panel("transmission_rates", limits = c(0,20)) -->
 <!-- ``` -->
 
-Maps of errors integrated
-```{r}
-get_error <- function(temp_raster, risk_function){
-
-  max_error_by_pixel <- function(temperature){
-    if (is.na(temperature)){
-      return(NA)
-    } else {
-      lower_bound <- temperature - (STANDARD_ERROR/(65-1))*1.96
-      upper_bound <- temperature + (STANDARD_ERROR/(65-1))*1.96
-  
-      max <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=TRUE)$objective
-      min <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=FALSE)$objective
-  
-      return(max - min)
-    }
-  }
-
-  values <- raster::values(temp_raster)
-  errors <- sapply(values, max_error_by_pixel)
-  values(temp_raster) <- errors
-  return(temp_raster)
-}
-
-plot(get_error(air_temp_raster, bite),
-       col = pal(50),
-       # xlim=c(0,55),
-       # ylim=c(-10,50),
-       # zlim=limits,
-       xlab="Longitude",
-       ylab = "Latitude")
-title(TeX("Biting rate uncertainty ($day^{-1}$)"))
-
-plot(get_error(air_temp_raster, transmit),
-       col = pal(50),
-       # xlim=c(0,55),
-       # ylim=c(-10,50),
-       # zlim=limits,
-       xlab="Longitude",
-       ylab = "Latitude")
-title(TeX("Transmission probability uncertainty (%)"))
-```
-
 
 ### Figure S3 - maps of errors
 ```{r erroes, echo = FALSE}
@@ -372,6 +329,49 @@ four_panel <- function(risk_function, limits){
        ylab = "Latitude")
   title(paste0("Night (", dt[1],")"))
 }
+```
+
+Maps of errors integrated
+```{r}
+get_error <- function(temp_raster, risk_function){
+
+  max_error_by_pixel <- function(temperature){
+    if (is.na(temperature)){
+      return(NA)
+    } else {
+      lower_bound <- temperature - (STANDARD_ERROR/(65-1))*1.96
+      upper_bound <- temperature + (STANDARD_ERROR/(65-1))*1.96
+  
+      max <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=TRUE)$objective
+      min <- optimize(risk_function, interval=c(lower_bound, upper_bound), maximum=FALSE)$objective
+  
+      return(max - min)
+    }
+  }
+
+  values <- raster::values(temp_raster)
+  errors <- sapply(values, max_error_by_pixel)
+  values(temp_raster) <- errors
+  return(temp_raster)
+}
+
+plot(get_error(air_temp_raster, bite),
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Biting rate uncertainty ($day^{-1}$)"))
+
+plot(get_error(air_temp_raster, transmit),
+       col = pal(50),
+       # xlim=c(0,55),
+       # ylim=c(-10,50),
+       # zlim=limits,
+       xlab="Longitude",
+       ylab = "Latitude")
+title(TeX("Transmission probability uncertainty (%)"))
 ```
 
 #### Biting rates errors

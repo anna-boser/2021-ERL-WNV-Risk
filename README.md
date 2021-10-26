@@ -1,4 +1,4 @@
-# WNV-paper
+# Micro-climate to macro-risk: Mapping  fine scale differences in mosquito-borne disease risk using remote sensing 
 This is the repository used to create West Nile virus risk maps with ECOSTRESS LST measurements. 
 
 It is organized as a R project in two parts: LST to air temperature modeling **temperature_modeling** (data, code, and results/figures), and WNV risk map creation and analysis **risk_maps** (data, code, and results/figures). 
